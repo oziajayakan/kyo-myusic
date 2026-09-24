@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KYO Downloader API</title>
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #151d30;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 229, 255, 0.1);
+    }
+    h1 {
+      color: #00e5ff;
+      margin-top: 0;
+      font-size: 26px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(0, 229, 255, 0.15);
+      color: #00e5ff;
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .endpoints {
+      text-align: left;
+      background: #0d121f;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .endpoint {
+      margin: 6px 0;
+      color: #38bdf8;
+    }
+    a {
+      color: #00e5ff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">● SERVER ACTIVE</div>
+    <h1>KYO API Server</h1>
+    <p>Backend API server untuk aplikasi KYO Downloader berjalan normal di Vercel.</p>
+    <div class="endpoints">
+      <div class="endpoint">GET /api/health</div>
+      <div class="endpoint">POST /api/analyze</div>
+    </div>
+    <p><a href="/api/health">Check Health Status &rarr;</a></p>
+  </div>
+</body>
+</html>
