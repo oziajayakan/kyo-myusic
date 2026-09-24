@@ -4439,6 +4439,40 @@ async function analyzeLink(url, specificScraper = null) {
   btnText.innerText = getTranslation("btnAnalyzing");
   document.getElementById("resultSection").classList.add("hidden");
 
+  // ─── 🚀 KYO Vercel Dedicated Server Integration ───────────────────────────
+  try {
+    const vercelEndpoint = settings.customServerUrl || "https://kyo-myusic.vercel.app/api/analyze";
+    console.log("Checking dedicated KYO Vercel Server:", vercelEndpoint);
+    
+    const vercelPromise = fetch(vercelEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url })
+    }).then(async r => {
+      if (!r.ok) return null;
+      return await r.json();
+    }).catch(() => null);
+
+    const raceTimeout = new Promise(resolve => setTimeout(() => resolve(null), 8000));
+    const kyoData = await Promise.race([vercelPromise, raceTimeout]);
+
+    if (kyoData && kyoData.success && kyoData.downloads?.length > 0) {
+      console.log("✅ Successfully resolved via KYO Vercel Server!");
+      activeAnalysisResult = kyoData;
+      activeScraperMethod = "KYO Dedicated Server";
+      showToast(getTranslation("toastScrapeSuccess"), "success");
+      renderResult(kyoData, platform, "KYO Server");
+
+      analyzeBtn.disabled = false;
+      loader.classList.add("hidden");
+      btnText.innerText = getTranslation("btnAnalyze");
+      if (cancelBtn) cancelBtn.classList.add("hidden");
+      return;
+    }
+  } catch (err) {
+    console.warn("KYO Vercel API fallback:", err);
+  }
+
   // Split-layout activation for cancel button
   if (cancelBtn) {
     cancelBtn.classList.remove("hidden");
