@@ -36,10 +36,14 @@ export default async function handler(req, res) {
 
   let url;
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    url = body?.url?.trim();
+    let body = req.body;
+    if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch (_) {}
+    }
+    url = body?.url || (typeof req.query?.url === 'string' ? req.query.url : null);
+    if (typeof url === 'string') url = url.trim();
   } catch {
-    return res.status(400).json({ success: false, error: 'Invalid JSON body.' });
+    url = null;
   }
 
   if (!url) {
