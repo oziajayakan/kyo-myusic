@@ -1,5 +1,5 @@
 /**
- * URL Utilities for Nimidz Media Downloader
+ * URL Utilities for oziajayakan Media Downloader
  * Handles URL extraction, protocol normalization, and tracker parameter stripping.
  */
 

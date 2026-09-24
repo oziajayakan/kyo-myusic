@@ -1,5 +1,5 @@
 /**
- * create-ico.js  –  Generates assets/icon.ico from nimiyo_icon.webp
+ * create-ico.js  –  Generates assets/icon.ico from kyo_icon.webp
  * using pure Node.js (no external binaries needed).
  * 
  * Run:  node create-ico.js
@@ -144,7 +144,7 @@ async function run() {
   if (!fs.existsSync('assets')) fs.mkdirSync('assets', { recursive: true });
 
   const outPath   = path.join('assets', 'icon.ico');
-  const inputWebp = 'nimiyo_icon.webp';
+  const inputWebp = 'kyo_icon.webp';
 
   let sharp;
   try {
@@ -156,7 +156,7 @@ async function run() {
   const iconSizes = [16, 32, 48, 64, 128, 256];
 
   if (sharp && fs.existsSync(inputWebp)) {
-    console.log('sharp found – converting nimiyo_icon.webp → icon.ico');
+    console.log('sharp found – converting kyo_icon.webp → icon.ico');
     const pngBuffers = await Promise.all(
       iconSizes.map(s =>
         sharp(inputWebp)

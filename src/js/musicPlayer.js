@@ -1,10 +1,10 @@
 /**
- * NIMIYO Local Music Player Engine
+ * KYO Local Music Player Engine
  * High-performance, offline audio playback with Soft UI + Neo-Brutalism aesthetics.
- * Full feature parity with Flow music app adapted to NIMIYO design language.
+ * Full feature parity with Flow music app adapted to KYO design language.
  */
 
-class NimiyoMusicPlayer {
+class KYOMusicPlayer {
   constructor() {
     // Playback Engine
     this.audio = new Audio();
@@ -12,7 +12,7 @@ class NimiyoMusicPlayer {
 
     // Library State
     this.allTracks = [];
-    this.nimiyoTracks = [];
+    this.kyoTracks = [];
     this.artistsMap = new Map();
     this.albumsMap = new Map();
     this.artworkCache = new Map();
@@ -31,7 +31,7 @@ class NimiyoMusicPlayer {
     this.preMuteVolume = 1.0;
     this.playbackRate = 1.0;
     this.durationDisplayMode = "total"; // 'total' | 'remaining'
-    this.activeTab = "nimiyo"; // 'nimiyo' | 'songs' | 'artists' | 'album'
+    this.activeTab = "kyo"; // 'kyo' | 'songs' | 'artists' | 'album'
     this.sortMode = "title_asc"; // 'title_asc' | 'title_desc' | 'artist_asc' | 'album_asc' | 'dur_desc' | 'dur_asc'
     this.searchQuery = "";
 
@@ -131,7 +131,7 @@ class NimiyoMusicPlayer {
       grantPermissionBtn: document.getElementById("grantAudioPermBtn"),
 
       // Pane bodies
-      paneNimiyo: document.getElementById("player-pane-nimiyo"),
+      paneKYO: document.getElementById("player-pane-kyo"),
       paneSongs: document.getElementById("player-pane-songs"),
       paneArtists: document.getElementById("player-pane-artists"),
       paneAlbums: document.getElementById("player-pane-albums"),
@@ -306,7 +306,7 @@ class NimiyoMusicPlayer {
       moveTargetModal: document.getElementById("moveTargetModal"),
       closeMoveTargetBtn: document.getElementById("closeMoveTargetBtn"),
       moveOptionPlaylistBtn: document.getElementById("moveOptionPlaylistBtn"),
-      moveOptionNimiyoBtn: document.getElementById("moveOptionNimiyoBtn"),
+      moveOptionKYOBtn: document.getElementById("moveOptionKYOBtn"),
 
       // Delete Confirm Modal Elements
       deleteConfirmModal: document.getElementById("deleteConfirmModal"),
@@ -319,7 +319,7 @@ class NimiyoMusicPlayer {
 
   loadPersistedPreferences() {
     try {
-      const raw = localStorage.getItem("nimiyo_music_prefs");
+      const raw = localStorage.getItem("kyo_music_prefs");
       if (raw) {
         const prefs = JSON.parse(raw);
         if (typeof prefs.volume === "number") this.volume = prefs.volume;
@@ -358,7 +358,7 @@ class NimiyoMusicPlayer {
         playbackRate: this.playbackRate,
         lastTrackId: this.currentTrack ? this.currentTrack.id : this.lastTrackId
       };
-      localStorage.setItem("nimiyo_music_prefs", JSON.stringify(prefs));
+      localStorage.setItem("kyo_music_prefs", JSON.stringify(prefs));
     } catch (_) {}
   }
 
@@ -489,7 +489,7 @@ class NimiyoMusicPlayer {
   getTracksFromHistoryDownloads() {
     const list = [];
     try {
-      const historyRaw = localStorage.getItem("nimiyo_download_history_v2");
+      const historyRaw = localStorage.getItem("kyo_download_history_v2");
       if (historyRaw) {
         const items = JSON.parse(historyRaw);
         items.forEach((item, idx) => {
@@ -506,7 +506,7 @@ class NimiyoMusicPlayer {
               fileName: item.fileName || "audio.mp3",
               filePath: item.filePath || "",
               contentUri: item.contentUri || item.fileUri || item.downloadUrl || "",
-              isNimiyo: true,
+              isKYO: true,
               hasArtwork: false,
               hasLyrics: false,
               mimeType: "audio/mpeg"
@@ -520,7 +520,7 @@ class NimiyoMusicPlayer {
 
   processLibraryTracks(tracks) {
     this.allTracks = tracks || [];
-    this.nimiyoTracks = [];
+    this.kyoTracks = [];
     this.artistsMap.clear();
     this.albumsMap.clear();
 
@@ -538,9 +538,9 @@ class NimiyoMusicPlayer {
       track.displayArtist = artist;
       track.displayAlbum = album;
 
-      // Filter NIMIYO folder tracks
-      if (track.isNimiyo || (track.filePath && track.filePath.toLowerCase().includes("nimiyo"))) {
-        this.nimiyoTracks.push(track);
+      // Filter KYO folder tracks
+      if (track.isKYO || (track.filePath && track.filePath.toLowerCase().includes("kyo"))) {
+        this.kyoTracks.push(track);
       }
 
       // Group by Artist
@@ -899,7 +899,7 @@ class NimiyoMusicPlayer {
   async shuffleAll(tracks = null) {
     let list = tracks;
     if (!list || list.length === 0) {
-      list = this.activeTab === "nimiyo" ? this.nimiyoTracks : this.allTracks;
+      list = this.activeTab === "kyo" ? this.kyoTracks : this.allTracks;
     }
     if (!list || list.length === 0) {
       if (window.showToast) {
@@ -1461,7 +1461,7 @@ class NimiyoMusicPlayer {
           method: "GET",
           url: url,
           headers: {
-            "User-Agent": "NimiyoMusicPlayer/1.0",
+            "User-Agent": "KYOMusicPlayer/1.0",
             "Accept": "application/json"
           }
         });
@@ -1477,7 +1477,7 @@ class NimiyoMusicPlayer {
     try {
       const res = await fetch(url, {
         headers: {
-          "User-Agent": "NimiyoMusicPlayer/1.0",
+          "User-Agent": "KYOMusicPlayer/1.0",
           "Accept": "application/json"
         }
       });
@@ -1589,7 +1589,7 @@ class NimiyoMusicPlayer {
         const lrcKeys = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (k && k.startsWith("nimiyo_lrc_")) {
+          if (k && k.startsWith("kyo_lrc_")) {
             lrcKeys.push(k);
           }
         }
@@ -1603,7 +1603,7 @@ class NimiyoMusicPlayer {
 
   async fetchLyrics(track) {
     if (!track) return;
-    const trackKey = `nimiyo_lrc_${track.id || track.filePath || (track.displayTitle + "_" + track.displayArtist)}`;
+    const trackKey = `kyo_lrc_${track.id || track.filePath || (track.displayTitle + "_" + track.displayArtist)}`;
     this.currentLyrics = "";
     this.parsedLrc = [];
     this.activeLyricIndex = -1;
@@ -2132,7 +2132,7 @@ class NimiyoMusicPlayer {
     if (this.elements.subHeaderTitle) this.elements.subHeaderTitle.innerText = "PLAYER";
 
     [
-      this.elements.paneNimiyo,
+      this.elements.paneKYO,
       this.elements.paneSongs,
       this.elements.paneArtists,
       this.elements.paneAlbums,
@@ -2142,9 +2142,9 @@ class NimiyoMusicPlayer {
     const q = (this.elements.searchInput?.value || "").trim().toLowerCase();
 
     switch (this.activeTab) {
-      case "nimiyo":
-        this.elements.paneNimiyo?.classList.remove("hidden");
-        this.renderTrackList(this.elements.paneNimiyo, this.sortTracks(this.filterTracks(this.nimiyoTracks, q)), "nimiyo");
+      case "kyo":
+        this.elements.paneKYO?.classList.remove("hidden");
+        this.renderTrackList(this.elements.paneKYO, this.sortTracks(this.filterTracks(this.kyoTracks, q)), "kyo");
         break;
       case "songs":
         this.elements.paneSongs?.classList.remove("hidden");
@@ -2174,8 +2174,8 @@ class NimiyoMusicPlayer {
     if (!container) return;
 
     if (!tracks || tracks.length === 0) {
-      const emptyMsg = sourceTab === "nimiyo"
-        ? this.t("musicNoNimiyoSongs", "Belum ada audio di folder musik NIMIYO")
+      const emptyMsg = sourceTab === "kyo"
+        ? this.t("musicNoKYOSongs", "Belum ada audio di folder musik KYO")
         : this.t("musicNoSongs", "Tidak ada file audio lokal ditemukan");
       container.innerHTML = `
         <div class="music-empty-state">
@@ -2186,7 +2186,7 @@ class NimiyoMusicPlayer {
       return;
     }
 
-    const listPlaceholder = "nimiyo_icon.webp";
+    const listPlaceholder = "kyo_icon.webp";
     const html = tracks.map((track, idx) => {
       const isCurrent = this.currentTrack && this.currentTrack.id === track.id;
       const isCurrentPlaying = isCurrent && this.isPlaying;
@@ -2279,7 +2279,7 @@ class NimiyoMusicPlayer {
       return;
     }
 
-    const artistPlaceholder = "nimiyo_icon.webp";
+    const artistPlaceholder = "kyo_icon.webp";
     const html = artists.map((art, idx) => {
       const count = art.tracks.length;
       const initialThumb = (art.artworkTrack ? (this.artworkCache.get(art.artworkTrack.id) || art.artworkTrack.artwork || art.artworkTrack.thumbnail) : null) || artistPlaceholder;
@@ -2324,7 +2324,7 @@ class NimiyoMusicPlayer {
       return;
     }
 
-    const albumPlaceholder = "nimiyo_icon.webp";
+    const albumPlaceholder = "kyo_icon.webp";
     const html = albums.map((alb, idx) => {
       const count = alb.tracks.length;
       const initialThumb = (alb.artworkTrack ? (this.artworkCache.get(alb.artworkTrack.id) || alb.artworkTrack.artwork || alb.artworkTrack.thumbnail) : null) || albumPlaceholder;
@@ -2361,7 +2361,7 @@ class NimiyoMusicPlayer {
 
     // 1. Hide all standard sub-panes
     [
-      this.elements.paneNimiyo,
+      this.elements.paneKYO,
       this.elements.paneSongs,
       this.elements.paneArtists,
       this.elements.paneAlbums
@@ -2382,7 +2382,7 @@ class NimiyoMusicPlayer {
       if (playerBody) playerBody.scrollTop = 0;
     }
 
-    const artistHeroPlaceholder = (artistObj.artworkTrack ? (this.artworkCache.get(artistObj.artworkTrack.id) || artistObj.artworkTrack.artwork || artistObj.artworkTrack.thumbnail) : null) || "nimiyo_icon.webp";
+    const artistHeroPlaceholder = (artistObj.artworkTrack ? (this.artworkCache.get(artistObj.artworkTrack.id) || artistObj.artworkTrack.artwork || artistObj.artworkTrack.thumbnail) : null) || "kyo_icon.webp";
     const totalDurationMs = (artistObj.tracks || []).reduce((acc, t) => acc + (t.duration || 0), 0);
     const totalDurationStr = totalDurationMs > 0 ? this.formatTotalDuration(totalDurationMs) : "";
     const albumsCount = artistObj.albums?.size || 0;
@@ -2392,7 +2392,7 @@ class NimiyoMusicPlayer {
     const heroHtml = `
       <div class="drilldown-hero-card">
         <div class="drilldown-hero-art-wrapper is-artist">
-          <img class="lazy-art" data-track-id="${artistObj.artworkTrack?.id}" src="${artistHeroPlaceholder}" onerror="this.onerror=null;this.src='nimiyo_icon.webp';" alt="Artist">
+          <img class="lazy-art" data-track-id="${artistObj.artworkTrack?.id}" src="${artistHeroPlaceholder}" onerror="this.onerror=null;this.src='kyo_icon.webp';" alt="Artist">
         </div>
         <div class="drilldown-hero-title">${this.escapeHtml(artistObj.name)}</div>
         <div class="drilldown-hero-subtitle">${trackCount} ${trackCount === 1 ? 'Track' : 'Tracks'} • ${albumsCount} ${albumsCount === 1 ? 'Album' : 'Albums'}${totalDurationStr ? ' • ' + totalDurationStr : ''}</div>
@@ -2446,7 +2446,7 @@ class NimiyoMusicPlayer {
 
     // 1. Hide all standard sub-panes
     [
-      this.elements.paneNimiyo,
+      this.elements.paneKYO,
       this.elements.paneSongs,
       this.elements.paneArtists,
       this.elements.paneAlbums
@@ -2467,7 +2467,7 @@ class NimiyoMusicPlayer {
       if (playerBody) playerBody.scrollTop = 0;
     }
 
-    const albumHeroPlaceholder = (albObj.artworkTrack ? (this.artworkCache.get(albObj.artworkTrack.id) || albObj.artworkTrack.artwork || albObj.artworkTrack.thumbnail) : null) || "nimiyo_icon.webp";
+    const albumHeroPlaceholder = (albObj.artworkTrack ? (this.artworkCache.get(albObj.artworkTrack.id) || albObj.artworkTrack.artwork || albObj.artworkTrack.thumbnail) : null) || "kyo_icon.webp";
     const totalDurationMs = (albObj.tracks || []).reduce((acc, t) => acc + (t.duration || 0), 0);
     const totalDurationStr = totalDurationMs > 0 ? this.formatTotalDuration(totalDurationMs) : "";
     const trackCount = albObj.tracks ? albObj.tracks.length : 0;
@@ -2476,7 +2476,7 @@ class NimiyoMusicPlayer {
     const heroHtml = `
       <div class="drilldown-hero-card">
         <div class="drilldown-hero-art-wrapper">
-          <img class="lazy-art" data-track-id="${albObj.artworkTrack?.id}" src="${albumHeroPlaceholder}" onerror="this.onerror=null;this.src='nimiyo_icon.webp';" alt="Album">
+          <img class="lazy-art" data-track-id="${albObj.artworkTrack?.id}" src="${albumHeroPlaceholder}" onerror="this.onerror=null;this.src='kyo_icon.webp';" alt="Album">
         </div>
         <div class="drilldown-hero-title">${this.escapeHtml(albObj.title)}</div>
         <div class="drilldown-hero-subtitle">${this.escapeHtml(albObj.artist)} • ${trackCount} ${trackCount === 1 ? 'Track' : 'Tracks'}${albObj.year ? ' • ' + albObj.year : ''}${totalDurationStr ? ' • ' + totalDurationStr : ''}</div>
@@ -2678,10 +2678,10 @@ class NimiyoMusicPlayer {
 
   updateLibraryStatsUi() {
     if (this.elements.libraryStats) {
-      const nimiyoCount = this.nimiyoTracks.length;
+      const kyoCount = this.kyoTracks.length;
       const totalCount = this.allTracks.length;
       const songsWord = this.t("playlistSongsCount", "Lagu");
-      this.elements.libraryStats.innerText = `${nimiyoCount} NIMIYO • ${totalCount} ${songsWord}`;
+      this.elements.libraryStats.innerText = `${kyoCount} KYO • ${totalCount} ${songsWord}`;
     }
   }
 
@@ -2709,7 +2709,7 @@ class NimiyoMusicPlayer {
     const MediaSaver = window.Capacitor?.Plugins?.MediaSaver;
     if (MediaSaver && typeof MediaSaver.showMusicPlaybackNotification === "function") {
       try {
-        const title = this.currentTrack ? (this.currentTrack.displayTitle || this.currentTrack.title || "NIMIYO Player") : "NIMIYO Player";
+        const title = this.currentTrack ? (this.currentTrack.displayTitle || this.currentTrack.title || "KYO Player") : "KYO Player";
         const artist = this.currentTrack ? (this.currentTrack.displayArtist || this.currentTrack.artist || "") : "";
         const album = this.currentTrack ? (this.currentTrack.displayAlbum || this.currentTrack.album || "") : "";
         let artwork = this.currentTrack ? (this.artworkCache.get(this.currentTrack.id) || this.currentTrack.artwork || this.currentTrack.thumbnail || null) : null;
@@ -3107,7 +3107,7 @@ class NimiyoMusicPlayer {
   removeTrackFromDownloadHistory(track) {
     if (!track) return;
     try {
-      const historyRaw = localStorage.getItem("nimiyo_download_history_v2");
+      const historyRaw = localStorage.getItem("kyo_download_history_v2");
       if (historyRaw) {
         let items = JSON.parse(historyRaw);
         const origLen = items.length;
@@ -3118,7 +3118,7 @@ class NimiyoMusicPlayer {
           return !(pathMatch || nameMatch || uriMatch);
         });
         if (items.length !== origLen) {
-          localStorage.setItem("nimiyo_download_history_v2", JSON.stringify(items));
+          localStorage.setItem("kyo_download_history_v2", JSON.stringify(items));
           if (typeof window.renderHistoryList === "function") {
             window.renderHistoryList();
           }
@@ -3128,7 +3128,7 @@ class NimiyoMusicPlayer {
   }
 
   promptStoragePermissionModal() {
-    const confirmMsg = this.t("manageStoragePermRequired", "Izin Akses Berkas Diperlukan:\n\nPada Android 11 ke atas, Nimiyo memerlukan izin 'Akses semua berkas' agar dapat menghapus atau mengelola berkas audio secara permanen dari memori perangkat.\n\nBuka Setelan sekarang untuk mengaktifkan izin ini?");
+    const confirmMsg = this.t("manageStoragePermRequired", "Izin Akses Berkas Diperlukan:\n\nPada Android 11 ke atas, KYO memerlukan izin 'Akses semua berkas' agar dapat menghapus atau mengelola berkas audio secara permanen dari memori perangkat.\n\nBuka Setelan sekarang untuk mengaktifkan izin ini?");
     if (confirm(confirmMsg)) {
       const MediaSaver = window.Capacitor?.Plugins?.MediaSaver;
       if (MediaSaver && typeof MediaSaver.requestManageStoragePermission === "function") {
@@ -3174,7 +3174,7 @@ class NimiyoMusicPlayer {
         if (res && res.success) {
           // Remove from local lists
           this.allTracks = this.allTracks.filter(t => t.id !== track.id);
-          this.nimiyoTracks = this.nimiyoTracks.filter(t => t.id !== track.id);
+          this.kyoTracks = this.kyoTracks.filter(t => t.id !== track.id);
           this.removeTrackFromDownloadHistory(track);
           this.processLibraryTracks(this.allTracks);
 
@@ -3213,7 +3213,7 @@ class NimiyoMusicPlayer {
   // -------------------------------------------------------------
   loadPlaylists() {
     try {
-      const raw = localStorage.getItem("nimiyo_playlists");
+      const raw = localStorage.getItem("kyo_playlists");
       if (raw) {
         this.playlists = JSON.parse(raw);
       } else {
@@ -3226,7 +3226,7 @@ class NimiyoMusicPlayer {
 
   savePlaylists() {
     try {
-      localStorage.setItem("nimiyo_playlists", JSON.stringify(this.playlists));
+      localStorage.setItem("kyo_playlists", JSON.stringify(this.playlists));
     } catch (_) {}
   }
 
@@ -3332,18 +3332,18 @@ class NimiyoMusicPlayer {
     if (empty) empty.classList.add("hidden");
 
     grid.innerHTML = this.playlists.map(pl => {
-      let coverSrc = "nimiyo_icon.webp";
+      let coverSrc = "kyo_icon.webp";
       if (pl.trackIds && pl.trackIds.length > 0) {
         const firstTrack = this.allTracks.find(t => t.id === pl.trackIds[0]);
         if (firstTrack) {
-          coverSrc = this.artworkCache.get(firstTrack.id) || "nimiyo_icon.webp";
+          coverSrc = this.artworkCache.get(firstTrack.id) || "kyo_icon.webp";
         }
       }
       const count = pl.trackIds ? pl.trackIds.length : 0;
       return `
         <div class="playlist-card" data-playlist-id="${pl.id}">
           <div class="playlist-card-cover-wrap">
-            <img class="playlist-card-cover" src="${coverSrc}" alt="Cover" onerror="this.src='nimiyo_icon.webp'">
+            <img class="playlist-card-cover" src="${coverSrc}" alt="Cover" onerror="this.src='kyo_icon.webp'">
             <div class="playlist-card-play-overlay">
               <div class="playlist-card-play-btn">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
@@ -3414,11 +3414,11 @@ class NimiyoMusicPlayer {
 
     if (coverEl) {
       if (trackObjects.length > 0) {
-        coverEl.src = this.artworkCache.get(trackObjects[0].id) || "nimiyo_icon.webp";
+        coverEl.src = this.artworkCache.get(trackObjects[0].id) || "kyo_icon.webp";
       } else {
-        coverEl.src = "nimiyo_icon.webp";
+        coverEl.src = "kyo_icon.webp";
       }
-      coverEl.onerror = () => { coverEl.src = "nimiyo_icon.webp"; };
+      coverEl.onerror = () => { coverEl.src = "kyo_icon.webp"; };
     }
 
     if (metaEl) {
@@ -3446,7 +3446,7 @@ class NimiyoMusicPlayer {
         const isCurrent = this.currentTrack && this.currentTrack.id === track.id;
         const isSelected = this.isPlaylistSelectionMode && this.selectedPlaylistTrackIds.has(track.id);
         const durStr = this.formatTime(track.duration ? Math.floor(track.duration / 1000) : 0);
-        const artSrc = this.artworkCache.get(track.id) || "nimiyo_icon.webp";
+        const artSrc = this.artworkCache.get(track.id) || "kyo_icon.webp";
         const indexStr = (idx + 1 < 10 ? "0" : "") + (idx + 1);
 
         return `
@@ -3458,7 +3458,7 @@ class NimiyoMusicPlayer {
             </div>
             <span class="playlist-track-index">${indexStr}</span>
             <div class="playlist-track-thumb-wrap">
-              <img class="playlist-track-thumb" src="${artSrc}" alt="Art" onerror="this.src='nimiyo_icon.webp'">
+              <img class="playlist-track-thumb" src="${artSrc}" alt="Art" onerror="this.src='kyo_icon.webp'">
               <div class="playlist-play-overlay ${isCurrent ? 'active' : ''}">
                 ${isCurrent && this.isPlaying
                   ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>'
@@ -3807,7 +3807,7 @@ class NimiyoMusicPlayer {
   }
 
   // -------------------------------------------------------------
-  // Song Picker Engine (Select from all folders: nimiyo/songs/artists/album)
+  // Song Picker Engine (Select from all folders: kyo/songs/artists/album)
   // -------------------------------------------------------------
   openSongPicker() {
     const pl = this.playlists.find(p => p.id === this.activePlaylistId);
@@ -3840,8 +3840,8 @@ class NimiyoMusicPlayer {
   getFilteredPickerTracks() {
     let list = [];
     switch (this.pickerActiveTab) {
-      case "nimiyo":
-        list = [...this.nimiyoTracks];
+      case "kyo":
+        list = [...this.kyoTracks];
         break;
       case "artists":
         list = [...this.allTracks].sort((a, b) => (a.displayArtist || "").localeCompare(b.displayArtist || ""));
@@ -3892,7 +3892,7 @@ class NimiyoMusicPlayer {
 
     listEl.innerHTML = tracks.map(track => {
       const isSelected = this.selectedPickerTrackIds.has(track.id);
-      const artSrc = this.artworkCache.get(track.id) || "nimiyo_icon.webp";
+      const artSrc = this.artworkCache.get(track.id) || "kyo_icon.webp";
       const durStr = this.formatTime(track.duration ? Math.floor(track.duration / 1000) : 0);
       return `
         <div class="picker-track-item ${isSelected ? 'selected' : ''}" data-track-id="${track.id}">
@@ -3901,7 +3901,7 @@ class NimiyoMusicPlayer {
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
-          <img class="picker-track-thumb" src="${artSrc}" alt="Art" onerror="this.src='nimiyo_icon.webp'">
+          <img class="picker-track-thumb" src="${artSrc}" alt="Art" onerror="this.src='kyo_icon.webp'">
           <div class="picker-track-info">
             <div class="picker-track-title">${this.escapeHtml(track.displayTitle)}</div>
             <div class="picker-track-artist">${this.escapeHtml(track.displayArtist)}</div>
@@ -4039,7 +4039,7 @@ class NimiyoMusicPlayer {
   // -------------------------------------------------------------
   enterSelectionMode(initialTrackId, trackList = []) {
     this.isSelectionMode = true;
-    this.currentSelectionTrackList = trackList && trackList.length > 0 ? trackList : (this.activeTab === "nimiyo" ? this.nimiyoTracks : this.allTracks);
+    this.currentSelectionTrackList = trackList && trackList.length > 0 ? trackList : (this.activeTab === "kyo" ? this.kyoTracks : this.allTracks);
     this.selectedTrackIds.clear();
     if (initialTrackId) {
       this.selectedTrackIds.add(initialTrackId);
@@ -4212,7 +4212,7 @@ class NimiyoMusicPlayer {
     }
   }
 
-  async executeMoveToNimiyoSelection() {
+  async executeMoveToKYOSelection() {
     this.closeMoveTargetDialog();
     const MediaSaver = window.Capacitor?.Plugins?.MediaSaver;
     const selectedTracks = [];
@@ -4226,33 +4226,33 @@ class NimiyoMusicPlayer {
     let alreadyCount = 0;
 
     for (const track of selectedTracks) {
-      if (track.isNimiyo || (track.filePath && track.filePath.toLowerCase().includes("nimiyo"))) {
+      if (track.isKYO || (track.filePath && track.filePath.toLowerCase().includes("kyo"))) {
         alreadyCount++;
         continue;
       }
 
-      if (MediaSaver && typeof MediaSaver.moveAudioToNimiyo === "function") {
+      if (MediaSaver && typeof MediaSaver.moveAudioToKYO === "function") {
         try {
-          const res = await MediaSaver.moveAudioToNimiyo({
+          const res = await MediaSaver.moveAudioToKYO({
             filePath: track.filePath || "",
             contentUri: track.contentUri || "",
             fileName: track.fileName || `${track.displayTitle}.mp3`
           });
           if (res && res.success) {
             track.filePath = res.newPath || track.filePath;
-            track.isNimiyo = true;
-            if (!this.nimiyoTracks.some(t => t.id === track.id)) {
-              this.nimiyoTracks.push(track);
+            track.isKYO = true;
+            if (!this.kyoTracks.some(t => t.id === track.id)) {
+              this.kyoTracks.push(track);
             }
             movedCount++;
           }
         } catch (e) {
-          console.warn("[MUSIC] Move to Nimiyo failed for track:", track.displayTitle, e);
+          console.warn("[MUSIC] Move to KYO failed for track:", track.displayTitle, e);
         }
       } else {
-        track.isNimiyo = true;
-        if (!this.nimiyoTracks.some(t => t.id === track.id)) {
-          this.nimiyoTracks.push(track);
+        track.isKYO = true;
+        if (!this.kyoTracks.some(t => t.id === track.id)) {
+          this.kyoTracks.push(track);
         }
         movedCount++;
       }
@@ -4264,9 +4264,9 @@ class NimiyoMusicPlayer {
 
     if (window.showToast) {
       if (movedCount > 0) {
-        window.showToast(this.t("selectionMovedToNimiyoToast", `${movedCount} lagu berhasil dipindahkan ke folder Nimiyo`, { count: movedCount }), "success");
+        window.showToast(this.t("selectionMovedToKYOToast", `${movedCount} lagu berhasil dipindahkan ke folder KYO`, { count: movedCount }), "success");
       } else if (alreadyCount > 0) {
-        window.showToast(this.t("selectionAlreadyInNimiyoToast", "Semua lagu yang dipilih sudah ada di folder Nimiyo"), "info");
+        window.showToast(this.t("selectionAlreadyInKYOToast", "Semua lagu yang dipilih sudah ada di folder KYO"), "info");
       }
     }
   }
@@ -4336,7 +4336,7 @@ class NimiyoMusicPlayer {
         if (deletedSuccessfully) {
           // Remove from memory
           this.allTracks = this.allTracks.filter(t => t.id !== tid);
-          this.nimiyoTracks = this.nimiyoTracks.filter(t => t.id !== tid);
+          this.kyoTracks = this.kyoTracks.filter(t => t.id !== tid);
           this.removeTrackFromDownloadHistory(track);
 
           // Remove from playlists
@@ -4451,7 +4451,7 @@ class NimiyoMusicPlayer {
   // UI Event Listeners
   // -------------------------------------------------------------
   setupUiEventListeners() {
-    // Sub-tab Navigation (NIMIYO | SONGS | ARTISTS | ALBUM)
+    // Sub-tab Navigation (KYO | SONGS | ARTISTS | ALBUM)
     document.querySelectorAll(".player-tab-btn[data-subtab]").forEach(btn => {
       btn.addEventListener("click", () => {
         const subtab = btn.getAttribute("data-subtab");
@@ -4779,7 +4779,7 @@ class NimiyoMusicPlayer {
       this.elements.pickerSelectAllBtn.addEventListener("click", () => this.togglePickerSelectAll());
     }
 
-    // Picker Filter Sub-Tabs (SEMUA | NIMIYO | ARTIS | ALBUM)
+    // Picker Filter Sub-Tabs (SEMUA | KYO | ARTIS | ALBUM)
     document.querySelectorAll(".picker-tab-btn[data-picker-tab]").forEach(btn => {
       btn.addEventListener("click", () => {
         const tab = btn.getAttribute("data-picker-tab");
@@ -4888,8 +4888,8 @@ class NimiyoMusicPlayer {
     if (this.elements.moveOptionPlaylistBtn) {
       this.elements.moveOptionPlaylistBtn.addEventListener("click", () => this.executeMoveToPlaylistSelection());
     }
-    if (this.elements.moveOptionNimiyoBtn) {
-      this.elements.moveOptionNimiyoBtn.addEventListener("click", () => this.executeMoveToNimiyoSelection());
+    if (this.elements.moveOptionKYOBtn) {
+      this.elements.moveOptionKYOBtn.addEventListener("click", () => this.executeMoveToKYOSelection());
     }
 
     // Delete Confirm Modal Events
@@ -5034,17 +5034,17 @@ class NimiyoMusicPlayer {
 
 // Global initialization
 window.addEventListener("DOMContentLoaded", () => {
-  window.nimiyoMusicPlayer = new NimiyoMusicPlayer();
+  window.kyoMusicPlayer = new KYOMusicPlayer();
 });
 
 window.addEventListener("beforeunload", () => {
-  if (window.nimiyoMusicPlayer) {
-    window.nimiyoMusicPlayer.clearNativeNotification();
+  if (window.kyoMusicPlayer) {
+    window.kyoMusicPlayer.clearNativeNotification();
   }
 });
 
 window.addEventListener("pagehide", () => {
-  if (window.nimiyoMusicPlayer) {
-    window.nimiyoMusicPlayer.clearNativeNotification();
+  if (window.kyoMusicPlayer) {
+    window.kyoMusicPlayer.clearNativeNotification();
   }
 });

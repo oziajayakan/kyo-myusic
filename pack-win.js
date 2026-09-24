@@ -113,7 +113,7 @@ function create_nsis_installer() {
 Unicode True
 !define APP_NAME     "${APP_NAME}"
 !define VERSION      "${VERSION}"
-!define PUBLISHER    "nimidz"
+!define PUBLISHER    "oziajayakan"
 !define APP_DIR      "${APP_DIR.replace(/\//g, '\\')}"
 !define OUT_EXE      "${exeOut.replace(/\//g, '\\')}"
 ${iconArg ? `!define ICON_FILE    "${iconArg}"` : ''}

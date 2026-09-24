@@ -71,7 +71,7 @@ async function build() {
 
     // Copy assets / icons / fonts (from root and src/assets)
     const rootAssets = [
-      "nimiyo_icon.webp",
+      "kyo_icon.webp",
       "icon_untukdi_aboutthisapp.webp",
       "MiSans-Regular.119.woff2",
       "MiSans-Medium.119.woff2",

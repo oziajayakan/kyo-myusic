@@ -18,8 +18,8 @@
         try {
           if (window.KYOShareBridge && typeof window.KYOShareBridge.getAppSettings === 'function') {
             s = JSON.parse(window.KYOShareBridge.getAppSettings() || "{}");
-          } else if (window.NimidzShareBridge && typeof window.NimidzShareBridge.getAppSettings === 'function') {
-            s = JSON.parse(window.NimidzShareBridge.getAppSettings() || "{}");
+          } else if (window.oziajayakanShareBridge && typeof window.oziajayakanShareBridge.getAppSettings === 'function') {
+            s = JSON.parse(window.oziajayakanShareBridge.getAppSettings() || "{}");
           } else {
             s = JSON.parse(localStorage.getItem("kyo_settings") || "{}");
           }

@@ -1,6 +1,6 @@
 {
-  "appId": "com.nimiyo.dllite",
-  "appName": "Nimiyo",
+  "appId": "com.kyo.dllite",
+  "appName": "KYO",
   "webDir": "www",
   "plugins": {
     "CapacitorHttp": {

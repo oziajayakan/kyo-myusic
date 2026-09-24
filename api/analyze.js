@@ -1,4 +1,4 @@
-// api/analyze.js – NIMIYO API: Main media analysis endpoint
+// api/analyze.js – KYO API: Main media analysis endpoint
 // Deploy to Vercel: https://vercel.com/new
 //
 // POST /api/analyze

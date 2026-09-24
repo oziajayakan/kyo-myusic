@@ -186,8 +186,8 @@ function initLanguageAndTheme() {
     if (window.KYOShareBridge && typeof window.KYOShareBridge.getAppSettings === 'function') {
       const raw = window.KYOShareBridge.getAppSettings();
       if (raw) parsed = JSON.parse(raw);
-    } else if (window.NimidzShareBridge && typeof window.NimidzShareBridge.getAppSettings === 'function') {
-      const raw = window.NimidzShareBridge.getAppSettings();
+    } else if (window.oziajayakanShareBridge && typeof window.oziajayakanShareBridge.getAppSettings === 'function') {
+      const raw = window.oziajayakanShareBridge.getAppSettings();
       if (raw) parsed = JSON.parse(raw);
     }
   } catch (_) {}
@@ -1048,7 +1048,7 @@ function saveToHistory(filename, result, dlItem, mediaType = "media") {
     localStorage.setItem("kyo_history", JSON.stringify(history));
 
     // Persist to native Android SharedPreferences so MainActivity syncs it
-    const bridge = window.KYOShareBridge || window.NimidzShareBridge || window.KYOShareBridge;
+    const bridge = window.KYOShareBridge || window.oziajayakanShareBridge || window.KYOShareBridge;
     if (bridge && typeof bridge.saveHistoryItem === "function") {
       bridge.saveHistoryItem(JSON.stringify(historyItem));
     }

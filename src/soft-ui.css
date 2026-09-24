@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NIMIYO Soft UI / Neumorphism + Glassmorphism Theme
+   KYO Soft UI / Neumorphism + Glassmorphism Theme
    Warm Yellow Palette | Layered Translucent Surfaces | Smooth Depth
    ========================================================================== */
 
@@ -464,8 +464,8 @@ body.theme-softui .balloon-badge {
 /* --------------------------------------------------------------------------
    Quick Save / Share Target Sheet (share.html)
    -------------------------------------------------------------------------- */
-body.theme-softui .nimiyo-sheet,
-html.theme-softui .nimiyo-sheet {
+body.theme-softui .kyo-sheet,
+html.theme-softui .kyo-sheet {
   background: var(--soft-surface-solid) !important;
   border-top: 1px solid var(--soft-border) !important;
   border-left: 1px solid var(--soft-border) !important;
@@ -474,8 +474,8 @@ html.theme-softui .nimiyo-sheet {
   box-shadow: 0 -12px 36px rgba(180, 168, 140, 0.3) !important;
 }
 
-body.theme-softui.dark-mode .nimiyo-sheet,
-html.theme-softui.dark-mode .nimiyo-sheet {
+body.theme-softui.dark-mode .kyo-sheet,
+html.theme-softui.dark-mode .kyo-sheet {
   background: #18181F !important;
   border-color: var(--soft-border) !important;
   box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.65) !important;

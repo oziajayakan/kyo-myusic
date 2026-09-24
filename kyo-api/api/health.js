@@ -7,7 +7,7 @@ export default function handler(req, res) {
 
   return res.status(200).json({
     status: 'ok',
-    service: 'NIMIYO API Server',
+    service: 'KYO API Server',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     platforms: ['tiktok', 'youtube'],

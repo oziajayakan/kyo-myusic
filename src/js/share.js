@@ -25,11 +25,11 @@ import { cleanUrl } from "./utils/urlUtils.js";
 import { getUserAgent } from "./utils/index.js";
 import { translations } from "./i18n/index.js";
 
-let currentLang = localStorage.getItem("nimidz_lang") || "en";
+let currentLang = localStorage.getItem("oziajayakan_lang") || "en";
 let lang = translations[currentLang] || translations.en;
 
 function applyShareLanguage() {
-  currentLang = localStorage.getItem("nimidz_lang") || "en";
+  currentLang = localStorage.getItem("oziajayakan_lang") || "en";
   lang = translations[currentLang] || translations.en;
   document.documentElement.lang = currentLang;
   document.documentElement.setAttribute("dir", currentLang === "ar" ? "rtl" : "ltr");
@@ -127,11 +127,11 @@ function detectPlatform(url) {
 function initUI() {
   applyShareLanguage();
 
-  const theme = localStorage.getItem("nimidz_theme") || "dark";
+  const theme = localStorage.getItem("oziajayakan_theme") || "dark";
   if (theme === "light") document.body.classList.add("light-theme");
   else document.body.classList.remove("light-theme");
 
-  const font = localStorage.getItem("nimidz_font") || "display";
+  const font = localStorage.getItem("oziajayakan_font") || "display";
   document.body.classList.remove(
     "font-default",
     "font-jakarta",
@@ -141,14 +141,14 @@ function initUI() {
   );
   document.body.classList.add(`font-${font}`);
 
-  targetUrl = window.__NIMIDZ_SHARE_URL || "";
+  targetUrl = window.__oziajayakan_SHARE_URL || "";
   if (!targetUrl) return;
 
   urlPreview.textContent = targetUrl;
   currentPlatform = detectPlatform(targetUrl);
   platformBadge.textContent = currentPlatform.toUpperCase();
 
-  const preferServer = localStorage.getItem("nimidz_prefer_server") || "ask";
+  const preferServer = localStorage.getItem("oziajayakan_prefer_server") || "ask";
   if (SERVERS[currentPlatform]) {
     const list = SERVERS[currentPlatform];
     selectedServer = preferServer === "server2" ? list[1].id : list[0].id;
@@ -182,7 +182,7 @@ function renderServerPills(list) {
 }
 
 window.dismissPanel = function () {
-  if (window.NimidzShareBridge?.dismiss) window.NimidzShareBridge.dismiss();
+  if (window.oziajayakanShareBridge?.dismiss) window.oziajayakanShareBridge.dismiss();
 };
 
 window.cancelOrDismiss = function () {
@@ -195,8 +195,8 @@ window.cancelOrDismiss = function () {
 };
 
 window.showToast = function (msg) {
-  if (window.NimidzShareBridge?.showToast) {
-    window.NimidzShareBridge.showToast(msg);
+  if (window.oziajayakanShareBridge?.showToast) {
+    window.oziajayakanShareBridge.showToast(msg);
   } else {
     const toast = document.getElementById("toast");
     if (toast) {
@@ -354,7 +354,7 @@ function renderDownloadList(result) {
       <div class="dl-badge" style="flex-shrink: 0;">${downloadBadgeText}</div>
     `;
 
-    btn.onclick = () => triggerDownload(dl, result.title || "Nimidz_Media", idx);
+    btn.onclick = () => triggerDownload(dl, result.title || "oziajayakan_Media", idx);
     downloadList.appendChild(btn);
   });
 
@@ -378,7 +378,7 @@ async function triggerDownload(dlItem, title, idx) {
   try {
     if (finalUrl.startsWith("applemusic_resolve:")) {
       const payloadStr = finalUrl.replace("applemusic_resolve:", "");
-      const resRaw = window.NimidzShareBridge.httpRequest(
+      const resRaw = window.oziajayakanShareBridge.httpRequest(
         JSON.stringify({
           url: "https://aplmate.com/action/track",
           method: "POST",
@@ -424,7 +424,7 @@ async function triggerDownload(dlItem, title, idx) {
     } else if (finalUrl.startsWith("spotidown_resolve:")) {
       const parts = finalUrl.replace("spotidown_resolve:", "").split("|||");
       const payloadStr = parts[0];
-      const resRaw = window.NimidzShareBridge.httpRequest(
+      const resRaw = window.oziajayakanShareBridge.httpRequest(
         JSON.stringify({
           url: "https://spotidown.app/action/track",
           method: "POST",
@@ -465,7 +465,7 @@ async function triggerDownload(dlItem, title, idx) {
       const dataVal = parts[0];
       const tokenVal = parts[1];
       const BASE = "https://soundloaders.app";
-      const resRaw = window.NimidzShareBridge.httpRequest(
+      const resRaw = window.oziajayakanShareBridge.httpRequest(
         JSON.stringify({
           url: BASE + "/action/tracks",
           method: "POST",
@@ -502,7 +502,7 @@ async function triggerDownload(dlItem, title, idx) {
     return;
   }
 
-  if (window.NimidzShareBridge?.downloadFile) {
+  if (window.oziajayakanShareBridge?.downloadFile) {
     let dlReferer = targetUrl;
     if (finalUrl.includes("spotidown.app"))
       dlReferer = "https://spotidown.app/";
@@ -511,7 +511,7 @@ async function triggerDownload(dlItem, title, idx) {
     else if (finalUrl.includes("aplmate.com"))
       dlReferer = "https://aplmate.com/";
 
-    window.NimidzShareBridge.downloadFile(
+    window.oziajayakanShareBridge.downloadFile(
       finalUrl,
       filename,
       folder,
@@ -541,9 +541,9 @@ function getFolderForPlatform(platform) {
     bandcamp: "Bandcamp",
     pixiv: "Pixiv",
   };
-  const base = localStorage.getItem("nimidz_download_path") || "Nimidz";
+  const base = localStorage.getItem("oziajayakan_download_path") || "oziajayakan";
   const sub = subfolders[platform] || "";
-  const autoFolder = localStorage.getItem("nimidz_auto_folder") !== "false";
+  const autoFolder = localStorage.getItem("oziajayakan_auto_folder") !== "false";
   return autoFolder && sub ? `${base}/${sub}` : base;
 }
 
@@ -553,7 +553,7 @@ function generateFilename(title, type, index) {
     .trim();
 
   const isTrackType = /^\d+\.\s+/.test(cleanTypeLabel);
-  let effectiveTitle = title || "Nimidz_Media";
+  let effectiveTitle = title || "oziajayakan_Media";
   if (isTrackType) {
     effectiveTitle = cleanTypeLabel.replace(/^\d+\.\s+/, "").trim() || cleanTypeLabel;
   }
@@ -566,7 +566,7 @@ function generateFilename(title, type, index) {
       .replace(/\s+/g, " ")
       .substring(0, 60);
 
-  if (!sanitized) sanitized = "Nimidz_Media";
+  if (!sanitized) sanitized = "oziajayakan_Media";
 
   let ext = "mp4";
   const t = (type || "").toLowerCase();
@@ -580,7 +580,7 @@ function generateFilename(title, type, index) {
     ext = "jpg";
   else if (t.includes("png")) ext = "png";
 
-  const template = localStorage.getItem("nimidz_filename") || "title";
+  const template = localStorage.getItem("oziajayakan_filename") || "title";
   let finalName = `${sanitized}.${ext}`;
 
   if (template === "title-platform") {
@@ -615,9 +615,9 @@ function generateFilename(title, type, index) {
 
 // Minimal History Sync
 function saveHistory(result, url) {
-  if (localStorage.getItem("nimidz_incognito") === "true") return;
+  if (localStorage.getItem("oziajayakan_incognito") === "true") return;
   try {
-    let history = JSON.parse(localStorage.getItem("nimidz_history") || "[]");
+    let history = JSON.parse(localStorage.getItem("oziajayakan_history") || "[]");
     let cleanTitle = (result.title || "Content")
       .replace(/#[^\s#]+/g, "")
       .replace(/\s{2,}/g, " ")
@@ -645,9 +645,9 @@ function saveHistory(result, url) {
     history.unshift(newItem);
 
     const updated = history.slice(0, 100);
-    localStorage.setItem("nimidz_history", JSON.stringify(updated));
-    if (window.NimidzShareBridge?.savePendingHistory) {
-      window.NimidzShareBridge.savePendingHistory(JSON.stringify(newItem));
+    localStorage.setItem("oziajayakan_history", JSON.stringify(updated));
+    if (window.oziajayakanShareBridge?.savePendingHistory) {
+      window.oziajayakanShareBridge.savePendingHistory(JSON.stringify(newItem));
     }
   } catch (err) {
     console.error("Save history error", err);
@@ -655,9 +655,9 @@ function saveHistory(result, url) {
 }
 
 function updateHistorySavedFile(filename, savedPath) {
-  if (localStorage.getItem("nimidz_incognito") === "true" || !targetUrl) return;
+  if (localStorage.getItem("oziajayakan_incognito") === "true" || !targetUrl) return;
   try {
-    let history = JSON.parse(localStorage.getItem("nimidz_history") || "[]");
+    let history = JSON.parse(localStorage.getItem("oziajayakan_history") || "[]");
     const isVideo = savedPath.toLowerCase().endsWith(".mp4");
     const isAudio =
       savedPath.toLowerCase().endsWith(".mp3") ||
@@ -679,9 +679,9 @@ function updateHistorySavedFile(filename, savedPath) {
         });
       }
       history[0] = { ...first, localFiles, localUri: savedPath };
-      localStorage.setItem("nimidz_history", JSON.stringify(history));
-      if (window.NimidzShareBridge?.savePendingHistory) {
-        window.NimidzShareBridge.savePendingHistory(JSON.stringify(history[0]));
+      localStorage.setItem("oziajayakan_history", JSON.stringify(history));
+      if (window.oziajayakanShareBridge?.savePendingHistory) {
+        window.oziajayakanShareBridge.savePendingHistory(JSON.stringify(history[0]));
       }
     }
   } catch (err) {
@@ -716,10 +716,10 @@ window.onDownloadFailed = function (filename, error) {
   });
 };
 
-window.onNimidzConfigReady = function () {
+window.onoziajayakanConfigReady = function () {
   initUI();
 };
 
-if (window.__NIMIDZ_SHARE_URL) {
+if (window.__oziajayakan_SHARE_URL) {
   initUI();
 }

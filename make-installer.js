@@ -91,7 +91,7 @@ powershell -ExecutionPolicy Bypass -Command ^
 REM Write uninstall info to registry
 reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\KYO Downloader" /v "DisplayName" /t REG_SZ /d "KYO Downloader" /f
 reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\KYO Downloader" /v "DisplayVersion" /t REG_SZ /d "${VERSION}" /f
-reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\KYO Downloader" /v "Publisher" /t REG_SZ /d "nimidz" /f
+reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\KYO Downloader" /v "Publisher" /t REG_SZ /d "oziajayakan" /f
 reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\KYO Downloader" /v "UninstallString" /t REG_SZ /d "cmd /c rd /s /q \\"%INSTALL_DIR%\\" && del \\"%USERPROFILE%\\Desktop\\KYO Downloader.lnk\\"" /f
 
 msg * "KYO Downloader berhasil diinstall!\\nShortcut sudah dibuat di Desktop."
@@ -157,7 +157,7 @@ $regKey = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$appN
 New-Item -Path $regKey -Force | Out-Null
 Set-ItemProperty -Path $regKey -Name 'DisplayName'    -Value $appName
 Set-ItemProperty -Path $regKey -Name 'DisplayVersion' -Value $version
-Set-ItemProperty -Path $regKey -Name 'Publisher'      -Value 'nimidz'
+Set-ItemProperty -Path $regKey -Name 'Publisher'      -Value 'oziajayakan'
 Set-ItemProperty -Path $regKey -Name 'InstallLocation'-Value $installDir
 Set-ItemProperty -Path $regKey -Name 'UninstallString'-Value "powershell -Command \\"Remove-Item -Recurse -Force '$installDir'; Remove-Item '$env:USERPROFILE\\Desktop\\$appName.lnk' -ErrorAction SilentlyContinue; Remove-Item '$smDir\\$appName.lnk' -ErrorAction SilentlyContinue; Remove-ItemProperty -Path '$regKey' -Name * -ErrorAction SilentlyContinue\\""
 

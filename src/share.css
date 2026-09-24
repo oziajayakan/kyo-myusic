@@ -1,4 +1,4 @@
-/* share.css — NIMIYO Quick Save Dialog Styles */
+/* share.css — KYO Quick Save Dialog Styles */
 
 html, body,
 html.share-page, body.share-body,
@@ -39,8 +39,8 @@ body.theme-neobrutalism.dark-mode {
   to { transform: translateY(0); }
 }
 
-/* Bottom Sheet Panel matching Nimiyo styling */
-.nimiyo-sheet {
+/* Bottom Sheet Panel matching KYO styling */
+.kyo-sheet {
   position: fixed;
   bottom: 0;
   left: 0;
