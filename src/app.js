@@ -4442,21 +4442,25 @@ async function analyzeLink(url, specificScraper = null) {
   // ─── 🚀 KYO Vercel Dedicated Server Integration ───────────────────────────
   try {
     const vercelEndpoint = settings.customServerUrl || "https://kyo-myusic.vercel.app/api/analyze";
-    console.log("Checking dedicated KYO Vercel Server:", vercelEndpoint);
+    console.log("Checking dedicated KYO Vercel Server:", vercelEndpoint, "for url:", url);
     
     const vercelPromise = fetch(vercelEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url })
+      body: JSON.stringify({ url: url })
     }).then(async r => {
-      if (!r.ok) return null;
-      return await r.json();
-    }).catch(() => null);
+      const data = await r.json().catch(() => null);
+      console.log("Vercel API HTTP status:", r.status, "data:", data);
+      return data;
+    }).catch(err => {
+      console.warn("Vercel network error:", err);
+      return null;
+    });
 
-    const raceTimeout = new Promise(resolve => setTimeout(() => resolve(null), 8000));
+    const raceTimeout = new Promise(resolve => setTimeout(() => resolve(null), 12000));
     const kyoData = await Promise.race([vercelPromise, raceTimeout]);
 
-    if (kyoData && kyoData.success && kyoData.downloads?.length > 0) {
+    if (kyoData && kyoData.success && Array.isArray(kyoData.downloads) && kyoData.downloads.length > 0) {
       console.log("✅ Successfully resolved via KYO Vercel Server!");
       activeAnalysisResult = kyoData;
       activeScraperMethod = "KYO Dedicated Server";
@@ -4470,7 +4474,7 @@ async function analyzeLink(url, specificScraper = null) {
       return;
     }
   } catch (err) {
-    console.warn("KYO Vercel API fallback:", err);
+    console.warn("KYO Vercel API fallback error:", err);
   }
 
   // Split-layout activation for cancel button
