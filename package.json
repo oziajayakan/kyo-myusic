@@ -1,0 +1,77 @@
+{
+  "name": "kyo-downloader",
+  "version": "2.1.1",
+  "description": "KYO Downloader – Desktop Edition",
+  "main": "electron/main.js",
+  "private": true,
+  "scripts": {
+    "build:web": "node build.js",
+    "start": "npm run build:web && electron .",
+    "dev": "electron .",
+    "dist": "npm run build:web && electron-builder --win",
+    "dist:portable": "npm run build:web && electron-builder --win portable",
+    "dist:installer": "npm run build:web && electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.kyo.downloader",
+    "productName": "KYO Downloader",
+    "copyright": "© 2026 KYO Music",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "www/**/*",
+      "electron/**/*"
+    ],
+    "extraFiles": [],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "sign": null,
+      "forceCodeSigning": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "KYO Downloader"
+    },
+    "portable": {
+      "artifactName": "KYO-Downloader-${version}-Portable.exe"
+    }
+  },
+  "dependencies": {
+    "@capacitor/clipboard": "^6.0.3"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^29.0.0",
+    "electron-builder": "^24.9.1",
+    "esbuild": "^0.25.0",
+    "esbuild-plugin-polyfill-node": "^0.3.0",
+    "sharp": "^0.35.4"
+  },
+  "allowScripts": {
+    "electron@29.4.6": true,
+    "esbuild@0.25.12": true,
+    "sharp@0.35.4": true,
+    "@electron/packager@20.3.0": true
+  }
+}
