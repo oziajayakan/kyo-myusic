@@ -1,5 +1,11 @@
 {
   "version": 2,
   "name": "kyo-api",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
+    }
+  }
 }

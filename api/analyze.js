@@ -16,8 +16,10 @@ const CORS_HEADERS = {
 };
 
 function detectPlatform(url) {
-  if (/tiktok\.com|vm\.tiktok|vt\.tiktok|douyin\.com/i.test(url)) return 'tiktok';
-  if (/youtube\.com\/|youtu\.be\//i.test(url)) return 'youtube';
+  if (!url || typeof url !== 'string') return null;
+  const u = url.toLowerCase();
+  if (/tiktok\.com|vm\.tiktok|vt\.tiktok|douyin\.com/.test(u)) return 'tiktok';
+  if (/youtube\.com\/|youtu\.be\/|youtube\.com\/shorts/.test(u)) return 'youtube';
   return null;
 }
 

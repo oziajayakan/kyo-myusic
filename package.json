@@ -59,7 +59,6 @@
   },
   "dependencies": {
     "@capacitor/clipboard": "^6.0.3",
-    "@distube/ytdl-core": "^4.16.10",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
