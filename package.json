@@ -23,6 +23,15 @@
       "www/**/*",
       "electron/**/*"
     ],
+    "extraResources": [
+      {
+        "from": "bin",
+        "to": "bin",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
     "extraFiles": [],
     "win": {
       "target": [
@@ -63,7 +72,7 @@
   },
   "devDependencies": {
     "@electron/packager": "^20.3.0",
-    "electron": "^29.0.0",
+    "electron": "^29.4.6",
     "electron-builder": "^24.9.1",
     "esbuild": "^0.25.0",
     "esbuild-plugin-polyfill-node": "^0.3.0",

@@ -2,7 +2,6 @@
 // Exposes safe APIs to the renderer via contextBridge
 
 const { contextBridge, ipcRenderer } = require('electron');
-const { shell } = require('@electron/remote') || {};
 
 // Polyfill: expose a simple openExternal and yt-dlp native analyzer
 contextBridge.exposeInMainWorld('electronAPI', {

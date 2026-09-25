@@ -63,10 +63,12 @@ function createWindow() {
 
 // ─── App lifecycle ────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
-  // Spoof user agent so media sites don't block requests
+  // Do not corrupt googlevideo or youtube requests to avoid 403 signature mismatches
   session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-    details.requestHeaders['User-Agent'] =
-      'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36';
+    if (!details.url.includes('googlevideo.com') && !details.url.includes('youtube.com')) {
+      details.requestHeaders['User-Agent'] =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+    }
     callback({ requestHeaders: details.requestHeaders });
   });
 
@@ -112,7 +114,9 @@ ipcMain.handle('analyze-media-ytdlp', async (event, targetUrl) => {
         '--no-playlist',
         '--no-warnings',
         targetUrl
-      ]);
+      ], {
+        windowsHide: true
+      });
 
       let stdoutData = '';
       let stderrData = '';
@@ -121,13 +125,21 @@ ipcMain.handle('analyze-media-ytdlp', async (event, targetUrl) => {
       proc.stderr.on('data', (d) => { stderrData += d.toString(); });
 
       proc.on('close', (code) => {
-        if (code !== 0 || !stdoutData.trim()) {
-          console.warn('yt-dlp error:', stderrData);
+        let info = null;
+        if (stdoutData.trim()) {
+          try {
+            info = JSON.parse(stdoutData);
+          } catch (e) {
+            console.warn('JSON parse error from yt-dlp output:', e.message);
+          }
+        }
+
+        if (!info) {
+          console.warn('yt-dlp error:', stderrData || 'Exit code ' + code);
           return resolve({ success: false, error: stderrData || 'Extraction failed' });
         }
 
         try {
-          const info = JSON.parse(stdoutData);
           const downloads = [];
           const seen = new Set();
 
@@ -146,6 +158,25 @@ ipcMain.handle('analyze-media-ytdlp', async (event, targetUrl) => {
                   quality: q,
                   size: f.filesize || f.filesize_approx || null
                 });
+              }
+            }
+
+            // Fallback video streams if no muxed formats found
+            if (downloads.length === 0) {
+              const videoStreams = info.formats.filter(f => f.url && f.vcodec !== 'none');
+              for (const f of videoStreams.reverse()) {
+                const q = f.format_note || (f.height ? `${f.height}p` : 'Video');
+                if (!seen.has(q)) {
+                  seen.add(q);
+                  downloads.push({
+                    label: `Video (${q})`,
+                    url: f.url,
+                    type: 'video',
+                    ext: f.ext || 'mp4',
+                    quality: q,
+                    size: f.filesize || f.filesize_approx || null
+                  });
+                }
               }
             }
 
