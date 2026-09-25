@@ -145,63 +145,45 @@ async function scrapeTikTok(videoUrl) {
   };
 }
 
-// ─── YouTube scraper via YouTube Android Player API ───────────────────────────
-async function scrapeYouTube(videoUrl) {
-  var videoId = extractYouTubeId(videoUrl);
-  if (!videoId) throw new Error('URL YouTube tidak valid');
-
-  var UA_ANDROID = 'com.google.android.youtube/17.36.4 (Linux; U; Android 11) gzip';
-
+// ─── YouTube inner API caller ─────────────────────────────────────────────────
+async function callYouTubePlayerAPI(videoId, clientConfig) {
   var payload = JSON.stringify({
     videoId: videoId,
-    context: {
-      client: {
-        clientName: 'ANDROID_TESTSUITE',
-        clientVersion: '1.9',
-        androidSdkVersion: 30,
-        userAgent: UA_ANDROID,
-        hl: 'en',
-        timeZone: 'UTC',
-        utcOffsetMinutes: 0,
-      },
-    },
+    context: { client: clientConfig.context },
   });
 
-  var ytRes = await httpRequest('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
+  var res = await httpRequest('https://www.youtube.com/youtubei/v1/player?prettyPrint=false&key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8', {
     method: 'POST',
     timeout: 15000,
     headers: {
       'Content-Type': 'application/json',
-      'User-Agent': UA_ANDROID,
-      'X-Youtube-Client-Name': '30',
-      'X-Youtube-Client-Version': '17.36.4',
+      'User-Agent': clientConfig.userAgent,
+      'X-Youtube-Client-Name': clientConfig.clientId,
+      'X-Youtube-Client-Version': clientConfig.context.clientVersion,
+      'Origin': 'https://www.youtube.com',
       'Content-Length': Buffer.byteLength(payload),
     },
     body: payload,
   });
 
-  if (ytRes.status !== 200) throw new Error('YouTube API returned HTTP ' + ytRes.status);
-
+  if (res.status !== 200) return null;
   var data;
-  try { data = JSON.parse(ytRes.body); } catch (e) { throw new Error('YouTube API returned invalid JSON'); }
+  try { data = JSON.parse(res.body); } catch (_) { return null; }
 
-  var videoDetails = data && data.videoDetails;
   var streamData = data && data.streamingData;
-  var streamFormats = [].concat(
+  var formats = [].concat(
     (streamData && streamData.formats) || [],
     (streamData && streamData.adaptiveFormats) || []
   ).filter(function(f) { return f && f.url; });
 
-  if (!streamFormats.length) {
-    // Try Invidious fallback
-    return scrapeYouTubeInvidious(videoId);
-  }
+  return { data: data, formats: formats };
+}
 
+function buildDownloads(formats) {
   var downloads = [];
   var seen = {};
 
-  // Muxed (video + audio)
-  var muxed = streamFormats
+  var muxed = formats
     .filter(function(f) { return f.mimeType && f.mimeType.indexOf('video') === 0 && f.audioQuality; })
     .sort(function(a, b) { return (b.height || 0) - (a.height || 0); });
 
@@ -212,8 +194,7 @@ async function scrapeYouTube(videoUrl) {
     downloads.push({ label: 'Video MP4 (' + q + ')', url: f.url, type: 'video', ext: 'mp4', quality: q });
   });
 
-  // Audio only
-  var audioOnly = streamFormats
+  var audioOnly = formats
     .filter(function(f) { return f.mimeType && f.mimeType.indexOf('audio') === 0; })
     .sort(function(a, b) { return (b.bitrate || 0) - (a.bitrate || 0); });
 
@@ -223,26 +204,89 @@ async function scrapeYouTube(videoUrl) {
     downloads.push({ label: 'Audio ' + (isM4a ? 'M4A' : 'WebM') + ' (' + bitrate + ')', url: f.url, type: 'audio', ext: isM4a ? 'm4a' : 'webm', quality: bitrate });
   });
 
-  if (!downloads.length) return scrapeYouTubeInvidious(videoId);
+  return downloads;
+}
 
-  var thumbnails = (videoDetails && videoDetails.thumbnail && videoDetails.thumbnail.thumbnails) || [];
-  thumbnails.sort(function(a, b) { return (b.width || 0) - (a.width || 0); });
-  var thumb = (thumbnails[0] && thumbnails[0].url) || ('https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg');
+// ─── YouTube scraper – tries multiple clients ─────────────────────────────────
+async function scrapeYouTube(videoUrl) {
+  var videoId = extractYouTubeId(videoUrl);
+  if (!videoId) throw new Error('URL YouTube tidak valid');
 
-  return {
-    title: (videoDetails && videoDetails.title) || 'YouTube Video',
-    thumbnail: thumb,
-    author: (videoDetails && videoDetails.author) || 'YouTube',
-    duration: (videoDetails && videoDetails.lengthSeconds) ? parseInt(videoDetails.lengthSeconds) : null,
-    downloads: downloads,
-  };
+  // Client configs to try in order (IOS is most reliable for non-restricted)
+  var clients = [
+    {
+      clientId: '5',
+      userAgent: 'com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X)',
+      context: {
+        clientName: 'IOS',
+        clientVersion: '19.29.1',
+        deviceModel: 'iPhone16,2',
+        userAgent: 'com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X)',
+        hl: 'en',
+        gl: 'US',
+        utcOffsetMinutes: 0,
+      },
+    },
+    {
+      clientId: '7',
+      userAgent: 'Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/538.1 (KHTML, like Gecko) Version/6.0 TV Safari/538.1',
+      context: {
+        clientName: 'TVHTML5',
+        clientVersion: '7.20230405.08.00',
+        hl: 'en',
+        gl: 'US',
+        utcOffsetMinutes: 0,
+      },
+    },
+    {
+      clientId: '30',
+      userAgent: 'com.google.android.youtube/17.36.4 (Linux; U; Android 11) gzip',
+      context: {
+        clientName: 'ANDROID_TESTSUITE',
+        clientVersion: '1.9',
+        androidSdkVersion: 30,
+        userAgent: 'com.google.android.youtube/17.36.4 (Linux; U; Android 11) gzip',
+        hl: 'en',
+        utcOffsetMinutes: 0,
+      },
+    },
+  ];
+
+  for (var i = 0; i < clients.length; i++) {
+    try {
+      var result = await callYouTubePlayerAPI(videoId, clients[i]);
+      if (!result || !result.formats || !result.formats.length) continue;
+
+      var downloads = buildDownloads(result.formats);
+      if (!downloads.length) continue;
+
+      var videoDetails = result.data && result.data.videoDetails;
+      var thumbnails = (videoDetails && videoDetails.thumbnail && videoDetails.thumbnail.thumbnails) || [];
+      thumbnails.sort(function(a, b) { return (b.width || 0) - (a.width || 0); });
+      var thumb = (thumbnails[0] && thumbnails[0].url) || ('https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg');
+
+      return {
+        title: (videoDetails && videoDetails.title) || 'YouTube Video',
+        thumbnail: thumb,
+        author: (videoDetails && videoDetails.author) || 'YouTube',
+        duration: (videoDetails && videoDetails.lengthSeconds) ? parseInt(videoDetails.lengthSeconds) : null,
+        downloads: downloads,
+      };
+    } catch (_) {}
+  }
+
+  // All YouTube clients failed — try Invidious
+  return scrapeYouTubeInvidious(videoId);
 }
 
 // ─── Invidious fallback ───────────────────────────────────────────────────────
 async function scrapeYouTubeInvidious(videoId) {
   var instances = [
+    'inv.nadeko.net',
     'invidious.privacyredirect.com',
     'yt.artemislena.eu',
+    'invidious.lunar.icu',
+    'iv.datura.network',
     'invidious.nerdvpn.de',
   ];
   var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/121.0.0.0 Safari/537.36';
@@ -256,7 +300,8 @@ async function scrapeYouTubeInvidious(videoId) {
       });
       if (res.status !== 200) continue;
 
-      var data = JSON.parse(res.body);
+      var data;
+      try { data = JSON.parse(res.body); } catch (_) { continue; }
       if (!data || (!data.formatStreams && !data.adaptiveFormats)) continue;
 
       var downloads = [];
@@ -291,7 +336,7 @@ async function scrapeYouTubeInvidious(videoId) {
     } catch (_) {}
   }
 
-  throw new Error('Tidak dapat mengekstrak link YouTube. Coba lagi nanti.');
+  throw new Error('Tidak dapat mengekstrak link YouTube. Semua server gagal, coba lagi nanti.');
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
