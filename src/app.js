@@ -3983,8 +3983,11 @@ function setupEventListeners() {
     }
   };
 
-  setChecked("settingSubfolderByCategory", settings.subfolderByCategory !== false);
-  updateCustomStorageUI();
+  const subCatEl = document.getElementById("settingSubfolderByCategory");
+  if (subCatEl) subCatEl.checked = settings.subfolderByCategory !== false;
+  if (typeof window.updateCustomStorageUI === "function") {
+    window.updateCustomStorageUI();
+  }
 
   const btnBrowseStorage = document.getElementById("btnBrowseStorage");
   if (btnBrowseStorage) {
