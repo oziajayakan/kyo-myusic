@@ -37,6 +37,14 @@ function createWindow() {
   // Load the app
   mainWindow.loadFile(path.join(__dirname, '..', 'www', 'index.html'));
 
+  // Allow F12 or Ctrl+Shift+I to toggle DevTools
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'F12' || (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+      mainWindow.webContents.toggleDevTools();
+      event.preventDefault();
+    }
+  });
+
   // Open external links in the default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
@@ -82,10 +90,22 @@ ipcMain.handle('open-external', async (event, url) => {
 ipcMain.handle('analyze-media-ytdlp', async (event, targetUrl) => {
   return new Promise((resolve) => {
     try {
-      const ytdlpBin = path.join(__dirname, '..', 'bin', 'yt-dlp.exe');
-      if (!fs.existsSync(ytdlpBin)) {
+      const candidates = [
+        path.join(process.resourcesPath, '..', 'bin', 'yt-dlp.exe'),
+        path.join(process.resourcesPath, 'bin', 'yt-dlp.exe'),
+        path.join(app.getAppPath(), '..', 'bin', 'yt-dlp.exe'),
+        path.join(app.getAppPath(), 'bin', 'yt-dlp.exe'),
+        path.join(__dirname, '..', 'bin', 'yt-dlp.exe'),
+        path.join(process.cwd(), 'bin', 'yt-dlp.exe')
+      ];
+
+      let ytdlpBin = candidates.find(p => fs.existsSync(p));
+      if (!ytdlpBin) {
+        console.warn('yt-dlp binary not found in candidates:', candidates);
         return resolve({ success: false, error: 'yt-dlp binary not found' });
       }
+
+      console.log('Using yt-dlp binary at:', ytdlpBin);
 
       const proc = spawn(ytdlpBin, [
         '-J',
