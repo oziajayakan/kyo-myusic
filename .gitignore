@@ -8,6 +8,7 @@ yarn-error.log*
 www/
 dist-electron/
 dist/
+bin/
 android/app/src/main/assets/public/
 android/app/src/main/assets/capacitor.config.json
 

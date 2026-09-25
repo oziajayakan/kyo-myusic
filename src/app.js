@@ -4439,6 +4439,29 @@ async function analyzeLink(url, specificScraper = null) {
   btnText.innerText = getTranslation("btnAnalyzing");
   document.getElementById("resultSection").classList.add("hidden");
 
+  // ─── ⚡ NATIVE ENGINE: Local yt-dlp Integration ───────────────────────────
+  if (window.electronAPI?.analyzeMedia) {
+    try {
+      console.log("Analyzing via local native yt-dlp engine:", url);
+      const nativeResult = await window.electronAPI.analyzeMedia(url);
+      if (nativeResult && nativeResult.success && nativeResult.downloads?.length > 0) {
+        console.log("✅ Successfully resolved via local yt-dlp engine!");
+        activeAnalysisResult = nativeResult;
+        activeScraperMethod = "Native yt-dlp Engine";
+        showToast(getTranslation("toastScrapeSuccess"), "success");
+        renderResult(nativeResult, platform, "Native Engine");
+
+        analyzeBtn.disabled = false;
+        loader.classList.add("hidden");
+        btnText.innerText = getTranslation("btnAnalyze");
+        if (cancelBtn) cancelBtn.classList.add("hidden");
+        return;
+      }
+    } catch (nativeErr) {
+      console.warn("Native yt-dlp error:", nativeErr);
+    }
+  }
+
   // ─── 🚀 KYO Vercel Dedicated Server Integration ───────────────────────────
   try {
     const vercelEndpoint = settings.customServerUrl || "https://kyo-myusic.vercel.app/api/analyze";

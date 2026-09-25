@@ -4,9 +4,10 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const { shell } = require('@electron/remote') || {};
 
-// Polyfill: expose a simple openExternal so share/links still work
+// Polyfill: expose a simple openExternal and yt-dlp native analyzer
 contextBridge.exposeInMainWorld('electronAPI', {
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  analyzeMedia: (url) => ipcRenderer.invoke('analyze-media-ytdlp', url),
   platform: process.platform,
   isElectron: true,
 });

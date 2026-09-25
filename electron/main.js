@@ -1,6 +1,7 @@
-const { app, BrowserWindow, shell, session, Menu } = require('electron');
+const { app, BrowserWindow, shell, session, Menu, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { spawn } = require('child_process');
 
 // ─── Window dimensions: 9:16 ratio ───────────────────────────────────────────
 const WIN_WIDTH  = 430;
@@ -71,3 +72,107 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+
+// ─── Native yt-dlp IPC Handler ───────────────────────────────────────────────
+ipcMain.handle('open-external', async (event, url) => {
+  shell.openExternal(url);
+  return true;
+});
+
+ipcMain.handle('analyze-media-ytdlp', async (event, targetUrl) => {
+  return new Promise((resolve) => {
+    try {
+      const ytdlpBin = path.join(__dirname, '..', 'bin', 'yt-dlp.exe');
+      if (!fs.existsSync(ytdlpBin)) {
+        return resolve({ success: false, error: 'yt-dlp binary not found' });
+      }
+
+      const proc = spawn(ytdlpBin, [
+        '-J',
+        '--no-playlist',
+        '--no-warnings',
+        targetUrl
+      ]);
+
+      let stdoutData = '';
+      let stderrData = '';
+
+      proc.stdout.on('data', (d) => { stdoutData += d.toString(); });
+      proc.stderr.on('data', (d) => { stderrData += d.toString(); });
+
+      proc.on('close', (code) => {
+        if (code !== 0 || !stdoutData.trim()) {
+          console.warn('yt-dlp error:', stderrData);
+          return resolve({ success: false, error: stderrData || 'Extraction failed' });
+        }
+
+        try {
+          const info = JSON.parse(stdoutData);
+          const downloads = [];
+          const seen = new Set();
+
+          // 1. Muxed Video + Audio
+          if (Array.isArray(info.formats)) {
+            const muxed = info.formats.filter(f => f.url && f.vcodec !== 'none' && f.acodec !== 'none');
+            for (const f of muxed.reverse()) {
+              const q = f.format_note || (f.height ? `${f.height}p` : 'MP4');
+              if (!seen.has(q)) {
+                seen.add(q);
+                downloads.push({
+                  label: `Video MP4 (${q})`,
+                  url: f.url,
+                  type: 'video',
+                  ext: f.ext || 'mp4',
+                  quality: q,
+                  size: f.filesize || f.filesize_approx || null
+                });
+              }
+            }
+
+            // 2. Audio Only formats
+            const audioOnly = info.formats.filter(f => f.url && f.vcodec === 'none' && f.acodec !== 'none');
+            for (const f of audioOnly.reverse()) {
+              const q = f.abr ? `${Math.round(f.abr)}kbps` : 'Audio';
+              if (!seen.has(`audio-${q}`)) {
+                seen.add(`audio-${q}`);
+                downloads.push({
+                  label: `Audio MP3/M4A (${q})`,
+                  url: f.url,
+                  type: 'audio',
+                  ext: f.ext || 'mp3',
+                  quality: q,
+                  size: f.filesize || f.filesize_approx || null
+                });
+              }
+            }
+          }
+
+          // Fallback single download link
+          if (downloads.length === 0 && info.url) {
+            downloads.push({
+              label: 'Direct Media File',
+              url: info.url,
+              type: info.ext === 'mp3' || info.ext === 'm4a' ? 'audio' : 'video',
+              ext: info.ext || 'mp4',
+              quality: 'Direct'
+            });
+          }
+
+          resolve({
+            success: true,
+            title: info.title || 'Media File',
+            thumbnail: info.thumbnail || (info.thumbnails?.[0]?.url) || '',
+            author: info.uploader || info.channel || '',
+            description: info.description || '',
+            downloads
+          });
+        } catch (e) {
+          resolve({ success: false, error: e.message });
+        }
+      });
+    } catch (err) {
+      resolve({ success: false, error: err.message });
+    }
+  });
+});
+

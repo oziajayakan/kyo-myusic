@@ -59,6 +59,16 @@ function package_app() {
   if (!fs.existsSync(APP_DIR)) {
     throw new Error(`Packaging failed – ${APP_DIR} does not exist`);
   }
+
+  // Copy bin folder (yt-dlp.exe) into packaged app
+  const binSrc = path.join(ROOT, 'bin');
+  const binDest = path.join(APP_DIR, 'bin');
+  if (fs.existsSync(binSrc)) {
+    ensureDir(binDest);
+    fs.cpSync(binSrc, binDest, { recursive: true });
+    console.log(`✅  Copied native binaries (yt-dlp) to: ${binDest}`);
+  }
+
   console.log(`\n✅  App packaged to: ${APP_DIR}`);
 }
 

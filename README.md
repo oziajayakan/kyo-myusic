@@ -10,6 +10,7 @@
   [![Design](https://img.shields.io/badge/Design-9:16_Mobile_Frame_%26_SoftUI-00E5FF.svg?style=for-the-badge&logoColor=black)](https://github.com/oziajayakan/kyo-myusic)
   [![License](https://img.shields.io/badge/License-GPL--3.0-black.svg?style=for-the-badge)](LICENSE)
   [![Vercel Ready](https://img.shields.io/badge/Serverless-Vercel_API-black.svg?style=for-the-badge&logo=vercel&logoColor=white)](https://kyo-myusic.vercel.app)
+  [![Saweria](https://img.shields.io/badge/Support-Saweria-E79C00.svg?style=for-the-badge&logo=ko-fi&logoColor=white)](https://saweria.co/kyoajh)
 
   <br/>
 
@@ -20,6 +21,9 @@
   <p align="center">
     <a href="https://github.com/oziajayakan/kyo-myusic/releases/latest">
       <img src="https://img.shields.io/badge/Download_Latest_EXE-🚀-00C48C?style=for-the-badge&logo=windows&logoColor=white" alt="Download EXE" />
+    </a>
+    <a href="https://saweria.co/kyoajh">
+      <img src="https://img.shields.io/badge/Dukung_Saya-Saweria_☕-E79C00?style=for-the-badge" alt="Support on Saweria" />
     </a>
     <a href="https://kyo-myusic.vercel.app">
       <img src="https://img.shields.io/badge/API_Server-⚡_Online-0070F3?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel API" />
@@ -122,6 +126,13 @@ kyo-myusic/
    ```bash
    npm run dist
    ```
+
+---
+
+## ☕ Dukung Pengembang (Support & Donasi)
+
+Jika KYO Downloader bermanfaat untuk Anda, pertimbangkan untuk memberikan sedikit traktiran kopi melalui:
+👉 **[Saweria: saweria.co/kyoajh](https://saweria.co/kyoajh)**
 
 ---
 
