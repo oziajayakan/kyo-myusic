@@ -138,9 +138,14 @@ if (-not (Test-Path $installDir)) {
 Write-Host "Installing files..." -ForegroundColor Green
 Copy-Item -Path "$scriptDir\\*" -Destination $installDir -Recurse -Force
 
-# Desktop shortcut
+# Desktop shortcut (handles both local and OneDrive redirected Desktops)
+$desktopDir = [Environment]::GetFolderPath('Desktop')
+if (-not (Test-Path $desktopDir)) {
+    $desktopDir = "$env:USERPROFILE\Desktop"
+    if (-not (Test-Path $desktopDir)) { New-Item -ItemType Directory -Force -Path $desktopDir | Out-Null }
+}
 $ws  = New-Object -ComObject WScript.Shell
-$lnk = $ws.CreateShortcut("$env:USERPROFILE\\Desktop\\$appName.lnk")
+$lnk = $ws.CreateShortcut("$desktopDir\\$appName.lnk")
 $lnk.TargetPath    = "$installDir\\$appName.exe"
 $lnk.WorkingDirectory = $installDir
 $lnk.Save()
@@ -259,7 +264,7 @@ echo  Menginstall file...
 xcopy /E /I /Y "%~dp0KYO Downloader-win32-x64\\*" "!INSTALL_DIR!\\" >nul
 
 echo  Membuat shortcut Desktop...
-powershell -ExecutionPolicy Bypass -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%USERPROFILE%\\Desktop\\KYO Downloader.lnk'); $s.TargetPath = '!INSTALL_DIR!\\KYO Downloader.exe'; $s.WorkingDirectory = '!INSTALL_DIR!'; $s.Save()"
+powershell -ExecutionPolicy Bypass -Command "$d = [Environment]::GetFolderPath('Desktop'); if (-not (Test-Path $d)) { $d = '%USERPROFILE%\\Desktop' }; $ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut(\"$d\\KYO Downloader.lnk\"); $s.TargetPath = '!INSTALL_DIR!\\KYO Downloader.exe'; $s.WorkingDirectory = '!INSTALL_DIR!'; $s.Save()"
 
 powershell -ExecutionPolicy Bypass -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\KYO Downloader.lnk'); $s.TargetPath = '!INSTALL_DIR!\\KYO Downloader.exe'; $s.WorkingDirectory = '!INSTALL_DIR!'; $s.Save()"
 
