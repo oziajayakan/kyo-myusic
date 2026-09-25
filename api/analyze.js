@@ -1,12 +1,9 @@
-// api/analyze.js – KYO API: Main media analysis endpoint
-// Deploy to Vercel: https://vercel.com/new
-//
+// api/analyze.js – KYO API: Main media analysis endpoint (CommonJS)
 // POST /api/analyze
 // Body: { "url": "https://vm.tiktok.com/..." }
-// Response: { success, platform, title, thumbnail, author, downloads[] }
 
-import { scrapeTikTok } from './_scrapers/tiktok.js';
-import { scrapeYouTube } from './_scrapers/youtube.js';
+const { scrapeTikTok } = require('./_scrapers/tiktok.js');
+const { scrapeYouTube } = require('./_scrapers/youtube.js');
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +20,7 @@ function detectPlatform(url) {
   return null;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
@@ -78,4 +75,4 @@ export default async function handler(req, res) {
       platform,
     });
   }
-}
+};
