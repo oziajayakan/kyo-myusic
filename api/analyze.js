@@ -145,142 +145,69 @@ async function scrapeTikTok(videoUrl) {
   };
 }
 
-// ─── YouTube inner API caller ─────────────────────────────────────────────────
-async function callYouTubePlayerAPI(videoId, clientConfig) {
-  var payload = JSON.stringify({
-    videoId: videoId,
-    context: { client: clientConfig.context },
-  });
-
-  var res = await httpRequest('https://www.youtube.com/youtubei/v1/player?prettyPrint=false&key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8', {
-    method: 'POST',
-    timeout: 15000,
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': clientConfig.userAgent,
-      'X-Youtube-Client-Name': clientConfig.clientId,
-      'X-Youtube-Client-Version': clientConfig.context.clientVersion,
-      'Origin': 'https://www.youtube.com',
-      'Content-Length': Buffer.byteLength(payload),
-    },
-    body: payload,
-  });
-
-  if (res.status !== 200) return null;
-  var data;
-  try { data = JSON.parse(res.body); } catch (_) { return null; }
-
-  var streamData = data && data.streamingData;
-  var formats = [].concat(
-    (streamData && streamData.formats) || [],
-    (streamData && streamData.adaptiveFormats) || []
-  ).filter(function(f) { return f && f.url; });
-
-  return { data: data, formats: formats };
-}
-
-function buildDownloads(formats) {
-  var downloads = [];
-  var seen = {};
-
-  var muxed = formats
-    .filter(function(f) { return f.mimeType && f.mimeType.indexOf('video') === 0 && f.audioQuality; })
-    .sort(function(a, b) { return (b.height || 0) - (a.height || 0); });
-
-  muxed.forEach(function(f) {
-    var q = f.qualityLabel || (f.height ? f.height + 'p' : 'SD');
-    if (seen[q]) return;
-    seen[q] = true;
-    downloads.push({ label: 'Video MP4 (' + q + ')', url: f.url, type: 'video', ext: 'mp4', quality: q });
-  });
-
-  var audioOnly = formats
-    .filter(function(f) { return f.mimeType && f.mimeType.indexOf('audio') === 0; })
-    .sort(function(a, b) { return (b.bitrate || 0) - (a.bitrate || 0); });
-
-  audioOnly.slice(0, 3).forEach(function(f) {
-    var bitrate = f.averageBitrate ? Math.round(f.averageBitrate / 1000) + 'kbps' : 'audio';
-    var isM4a = f.mimeType && f.mimeType.indexOf('mp4a') !== -1;
-    downloads.push({ label: 'Audio ' + (isM4a ? 'M4A' : 'WebM') + ' (' + bitrate + ')', url: f.url, type: 'audio', ext: isM4a ? 'm4a' : 'webm', quality: bitrate });
-  });
-
-  return downloads;
-}
-
-// ─── YouTube scraper – tries multiple clients ─────────────────────────────────
-async function scrapeYouTube(videoUrl) {
-  var videoId = extractYouTubeId(videoUrl);
-  if (!videoId) throw new Error('URL YouTube tidak valid');
-
-  // Client configs to try in order (IOS is most reliable for non-restricted)
-  var clients = [
-    {
-      clientId: '5',
-      userAgent: 'com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X)',
-      context: {
-        clientName: 'IOS',
-        clientVersion: '19.29.1',
-        deviceModel: 'iPhone16,2',
-        userAgent: 'com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X)',
-        hl: 'en',
-        gl: 'US',
-        utcOffsetMinutes: 0,
-      },
-    },
-    {
-      clientId: '7',
-      userAgent: 'Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/538.1 (KHTML, like Gecko) Version/6.0 TV Safari/538.1',
-      context: {
-        clientName: 'TVHTML5',
-        clientVersion: '7.20230405.08.00',
-        hl: 'en',
-        gl: 'US',
-        utcOffsetMinutes: 0,
-      },
-    },
-    {
-      clientId: '30',
-      userAgent: 'com.google.android.youtube/17.36.4 (Linux; U; Android 11) gzip',
-      context: {
-        clientName: 'ANDROID_TESTSUITE',
-        clientVersion: '1.9',
-        androidSdkVersion: 30,
-        userAgent: 'com.google.android.youtube/17.36.4 (Linux; U; Android 11) gzip',
-        hl: 'en',
-        utcOffsetMinutes: 0,
-      },
-    },
+// ─── Piped.video API (uses yt-dlp internally, most reliable) ────────────────────
+async function scrapePiped(videoId) {
+  var instances = [
+    'pipedapi.kavin.rocks',
+    'pipedapi.adminforge.de',
+    'piped-api.garudalinux.org',
+    'api.piped.yt',
+    'pipedapi.moomoo.me',
   ];
+  var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/121.0.0.0 Safari/537.36';
 
-  for (var i = 0; i < clients.length; i++) {
+  for (var i = 0; i < instances.length; i++) {
     try {
-      var result = await callYouTubePlayerAPI(videoId, clients[i]);
-      if (!result || !result.formats || !result.formats.length) continue;
+      var res = await httpRequest('https://' + instances[i] + '/streams/' + videoId, {
+        method: 'GET',
+        timeout: 10000,
+        headers: { 'User-Agent': UA },
+      });
+      if (res.status !== 200) continue;
 
-      var downloads = buildDownloads(result.formats);
-      if (!downloads.length) continue;
+      var data;
+      try { data = JSON.parse(res.body); } catch (_) { continue; }
+      if (!data || data.error) continue;
 
-      var videoDetails = result.data && result.data.videoDetails;
-      var thumbnails = (videoDetails && videoDetails.thumbnail && videoDetails.thumbnail.thumbnails) || [];
-      thumbnails.sort(function(a, b) { return (b.width || 0) - (a.width || 0); });
-      var thumb = (thumbnails[0] && thumbnails[0].url) || ('https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg');
+      var downloads = [];
+      var seen = {};
 
-      return {
-        title: (videoDetails && videoDetails.title) || 'YouTube Video',
-        thumbnail: thumb,
-        author: (videoDetails && videoDetails.author) || 'YouTube',
-        duration: (videoDetails && videoDetails.lengthSeconds) ? parseInt(videoDetails.lengthSeconds) : null,
-        downloads: downloads,
-      };
+      // Video streams (usually muxed or adaptive)
+      var videoStreams = (data.videoStreams || []).filter(function(f) { return f.url && f.videoOnly === false; });
+      videoStreams.sort(function(a, b) { return (b.quality || '').localeCompare(a.quality || ''); });
+      videoStreams.forEach(function(f) {
+        var q = f.quality || 'SD';
+        if (seen[q]) return;
+        seen[q] = true;
+        var ext = (f.mimeType && f.mimeType.indexOf('webm') !== -1) ? 'webm' : 'mp4';
+        downloads.push({ label: 'Video ' + ext.toUpperCase() + ' (' + q + ')', url: f.url, type: 'video', ext: ext, quality: q });
+      });
+
+      // Audio streams
+      var audioStreams = (data.audioStreams || []).filter(function(f) { return f.url; });
+      audioStreams.sort(function(a, b) { return (b.bitrate || 0) - (a.bitrate || 0); });
+      audioStreams.slice(0, 3).forEach(function(f) {
+        var bitrate = f.bitrate ? Math.round(f.bitrate / 1000) + 'kbps' : 'audio';
+        var ext = (f.mimeType && f.mimeType.indexOf('webm') !== -1) ? 'webm' : 'm4a';
+        downloads.push({ label: 'Audio ' + ext.toUpperCase() + ' (' + bitrate + ')', url: f.url, type: 'audio', ext: ext, quality: bitrate });
+      });
+
+      if (downloads.length > 0) {
+        return {
+          title: data.title || 'YouTube Video',
+          thumbnail: data.thumbnailUrl || ('https://img.youtube.com/vi/' + videoId + '/maxresdefault.jpg'),
+          author: data.uploader || 'YouTube',
+          duration: data.duration || null,
+          downloads: downloads,
+        };
+      }
     } catch (_) {}
   }
-
-  // All YouTube clients failed — try Invidious
-  return scrapeYouTubeInvidious(videoId);
+  return null;
 }
 
-// ─── Invidious fallback ───────────────────────────────────────────────────────
-async function scrapeYouTubeInvidious(videoId) {
+// ─── Invidious API fallback ───────────────────────────────────────────────────
+async function scrapeInvidious(videoId) {
   var instances = [
     'inv.nadeko.net',
     'invidious.privacyredirect.com',
@@ -295,14 +222,14 @@ async function scrapeYouTubeInvidious(videoId) {
     try {
       var res = await httpRequest('https://' + instances[i] + '/api/v1/videos/' + videoId, {
         method: 'GET',
-        timeout: 8000,
+        timeout: 9000,
         headers: { 'User-Agent': UA },
       });
       if (res.status !== 200) continue;
 
       var data;
       try { data = JSON.parse(res.body); } catch (_) { continue; }
-      if (!data || (!data.formatStreams && !data.adaptiveFormats)) continue;
+      if (!data || data.error || (!data.formatStreams && !data.adaptiveFormats)) continue;
 
       var downloads = [];
       var seen = {};
@@ -335,9 +262,29 @@ async function scrapeYouTubeInvidious(videoId) {
       }
     } catch (_) {}
   }
-
-  throw new Error('Tidak dapat mengekstrak link YouTube. Semua server gagal, coba lagi nanti.');
+  return null;
 }
+
+// ─── YouTube scraper – Piped first, then Invidious ────────────────────────────
+async function scrapeYouTube(videoUrl) {
+  var videoId = extractYouTubeId(videoUrl);
+  if (!videoId) throw new Error('URL YouTube tidak valid');
+
+  // Method 1: Piped API (backed by yt-dlp, very reliable)
+  try {
+    var r1 = await scrapePiped(videoId);
+    if (r1 && r1.downloads && r1.downloads.length > 0) return r1;
+  } catch (_) {}
+
+  // Method 2: Invidious proxy
+  try {
+    var r2 = await scrapeInvidious(videoId);
+    if (r2 && r2.downloads && r2.downloads.length > 0) return r2;
+  } catch (_) {}
+
+  throw new Error('Tidak dapat mengekstrak link YouTube. Coba lagi nanti atau coba link lain.');
+}
+
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
