@@ -204,6 +204,7 @@ const translations = {
     groupStorage: "Storage & Download",
     menuStorageDesc: "Filename, Duplicates & Cache",
     labelStoragePaths: "Storage Paths",
+    labelSubfolderByCategory: "Organize into Subfolders (VideoYo/AudioYo/ImageYo)",
     labelFilenameTemplate: "Filename Format",
     optFilenameTitle: "Title Only",
     optFilenameTitlePlatform: "Title + Platform",
@@ -892,6 +893,7 @@ const translations = {
     groupStorage: "Penyimpanan & Unduhan",
     menuStorageDesc: "Format Nama, Duplikat & Cache",
     labelStoragePaths: "Lokasi Penyimpanan",
+    labelSubfolderByCategory: "Pisahkan Folder Kategori (VideoYo/AudioYo/ImageYo)",
     labelFilenameTemplate: "Format Nama Berkas",
     optFilenameTitle: "Hanya Judul",
     optFilenameTitlePlatform: "Judul + Platform",
@@ -2883,7 +2885,9 @@ let settings = {
   autoLoop: true,
   keepAwake: false,
   videoPath: 'Downloads',
-  musicPath: 'Downloads'
+  musicPath: 'Downloads',
+  customDownloadPath: '',
+  subfolderByCategory: true
 };
 
 // Local variables
@@ -3943,6 +3947,98 @@ function setupEventListeners() {
   bindChange("settingAutoPlay", "autoPlay", true);
   bindChange("settingAutoLoop", "autoLoop", true);
   bindChange("settingKeepAwake", "keepAwake", true, applyKeepAwake);
+  bindChange("settingSubfolderByCategory", "subfolderByCategory", true, () => {
+    if (typeof updateCustomStorageUI === "function") updateCustomStorageUI();
+  });
+
+  // Custom Storage Location Handlers
+  window.updateCustomStorageUI = async function() {
+    const input = document.getElementById("settingCustomStoragePath");
+    let displayPath = settings.customDownloadPath || "";
+    if (!displayPath && window.electronAPI?.getDefaultDownloadDir) {
+      try {
+        const defaultDir = await window.electronAPI.getDefaultDownloadDir();
+        if (input && !settings.customDownloadPath) {
+          input.placeholder = defaultDir;
+        }
+      } catch (_) {}
+    }
+    if (input) {
+      input.value = displayPath;
+    }
+    
+    // Update path chips
+    const baseDisplay = displayPath || "Downloads/KYO";
+    const chipVideo = document.getElementById("chipVideoPath");
+    const chipAudio = document.getElementById("chipAudioPath");
+    const chipImage = document.getElementById("chipImagePath");
+    if (settings.subfolderByCategory !== false) {
+      if (chipVideo) chipVideo.innerText = `🎬 Video: ${baseDisplay}/VideoYo`;
+      if (chipAudio) chipAudio.innerText = `🎵 Audio: ${baseDisplay}/AudioYo`;
+      if (chipImage) chipImage.innerText = `🖼️ Foto: ${baseDisplay}/ImageYo`;
+    } else {
+      if (chipVideo) chipVideo.innerText = `🎬 Video: ${baseDisplay}`;
+      if (chipAudio) chipAudio.innerText = `🎵 Audio: ${baseDisplay}`;
+      if (chipImage) chipImage.innerText = `🖼️ Foto: ${baseDisplay}`;
+    }
+  };
+
+  setChecked("settingSubfolderByCategory", settings.subfolderByCategory !== false);
+  updateCustomStorageUI();
+
+  const btnBrowseStorage = document.getElementById("btnBrowseStorage");
+  if (btnBrowseStorage) {
+    btnBrowseStorage.addEventListener("click", async () => {
+      triggerHaptic();
+      if (window.electronAPI?.selectDownloadDir) {
+        const selected = await window.electronAPI.selectDownloadDir();
+        if (selected) {
+          settings.customDownloadPath = selected;
+          saveSettings();
+          if (window.electronAPI.setDownloadPath) {
+            window.electronAPI.setDownloadPath(selected);
+          }
+          updateCustomStorageUI();
+          showToast(`Folder penyimpanan: ${selected}`, "success");
+        }
+      } else {
+        const current = settings.customDownloadPath || "Downloads/KYO";
+        const custom = prompt("Tentukan folder penyimpanan kustom:", current);
+        if (custom !== null) {
+          settings.customDownloadPath = custom.trim();
+          saveSettings();
+          updateCustomStorageUI();
+          showToast("Lokasi penyimpanan diperbarui", "success");
+        }
+      }
+    });
+  }
+
+  const btnResetStorage = document.getElementById("btnResetStorage");
+  if (btnResetStorage) {
+    btnResetStorage.addEventListener("click", () => {
+      triggerHaptic();
+      settings.customDownloadPath = "";
+      saveSettings();
+      if (window.electronAPI?.setDownloadPath) {
+        window.electronAPI.setDownloadPath("");
+      }
+      updateCustomStorageUI();
+      showToast("Lokasi penyimpanan kembali ke Default", "info");
+    });
+  }
+
+  const openStorageFolderBtn = document.getElementById("openStorageFolderBtn");
+  if (openStorageFolderBtn) {
+    openStorageFolderBtn.addEventListener("click", async () => {
+      triggerHaptic();
+      if (window.electronAPI?.openDownloadDir) {
+        await window.electronAPI.openDownloadDir(settings.customDownloadPath || "");
+      } else {
+        showToast("Membuka folder hanya tersedia di Desktop", "info");
+      }
+    });
+  }
 
   // Settings Action Buttons
   const clearCacheBtn = document.getElementById("clearCacheBtn");
@@ -5722,6 +5818,24 @@ async function downloadSingleFile(dlItem, mediaResult, batchOptions = null, retr
       directory: capDir
     });
     savedFileUri = uriResult?.uri;
+    updateProgressPercent(100);
+  } else if (window.electronAPI && typeof window.electronAPI.saveDownloadBuffer === "function") {
+    // Desktop Electron Native Download with Custom Storage Path
+    const response = await fetch(downloadUrl, { headers: downloadHeaders });
+    if (!response.ok) throw new Error(`HTTP status ${response.status}`);
+    const arrayBuffer = await response.arrayBuffer();
+    const res = await window.electronAPI.saveDownloadBuffer({
+      folderPath: settings.customDownloadPath || '',
+      filename: sanitizedFilename,
+      buffer: arrayBuffer,
+      category: settings.subfolderByCategory !== false ? mediaCategory : null
+    });
+    if (res && res.success) {
+      savedFileUri = res.filePath;
+      console.log(`[DESKTOP DOWNLOAD] Berkas berhasil disimpan di: ${res.filePath}`);
+    } else {
+      throw new Error((res && res.error) || "Gagal menyimpan berkas di sistem lokal");
+    }
     updateProgressPercent(100);
   } else {
     // Browser fallback

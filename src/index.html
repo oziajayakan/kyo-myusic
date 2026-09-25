@@ -492,12 +492,31 @@
           </div>
           <div class="settings-list">
             <div class="setting-item stacked">
-              <label data-i18n="labelStoragePaths">Storage Paths</label>
-              <div class="storage-info-chips">
-                <span class="info-chip">🎬 Downloads/KYO/VideoYo</span>
-                <span class="info-chip">🎵 Downloads/KYO/AudioYo</span>
-                <span class="info-chip">🖼️ Downloads/KYO/ImageYo</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
+                <label data-i18n="labelStoragePaths" style="font-weight: 700; margin: 0;">Storage Location</label>
+                <button id="openStorageFolderBtn" class="btn outline-btn" style="padding: 4px 10px; font-size: 11px; height: auto; border-radius: 6px; cursor: pointer;" title="Buka di File Explorer">
+                  📂 Buka Folder
+                </button>
               </div>
+              <div style="display: flex; gap: 6px; width: 100%; align-items: center;">
+                <input type="text" id="settingCustomStoragePath" readonly placeholder="Default (Downloads/KYO)"
+                  style="flex: 1; padding: 9px 12px; border-radius: 8px; font-size: 12px; background: rgba(125,125,125,0.08); border: 1.5px solid rgba(125,125,125,0.2); cursor: default; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <button id="btnBrowseStorage" class="btn primary-btn" style="white-space: nowrap; padding: 9px 12px; font-size: 12px; height: auto; cursor: pointer;">
+                  Pilih...
+                </button>
+                <button id="btnResetStorage" class="btn outline-btn" style="padding: 9px 10px; font-size: 12px; height: auto; cursor: pointer;" title="Kembalikan ke Default">
+                  ↺
+                </button>
+              </div>
+              <div class="storage-info-chips" style="margin-top: 8px;">
+                <span class="info-chip" id="chipVideoPath">🎬 Video: /VideoYo</span>
+                <span class="info-chip" id="chipAudioPath">🎵 Audio: /AudioYo</span>
+                <span class="info-chip" id="chipImagePath">🖼️ Foto: /ImageYo</span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <label for="settingSubfolderByCategory" data-i18n="labelSubfolderByCategory">Pisahkan Folder Kategori</label>
+              <input type="checkbox" id="settingSubfolderByCategory" class="ios-switch">
             </div>
             <div class="setting-item">
               <label for="settingFilenameTemplate" data-i18n="labelFilenameTemplate">Filename Format</label>

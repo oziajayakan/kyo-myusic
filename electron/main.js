@@ -1,7 +1,9 @@
-const { app, BrowserWindow, shell, session, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, shell, session, Menu, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
+
+let currentDownloadDir = '';
 
 // ─── Window dimensions: 9:16 ratio ───────────────────────────────────────────
 const WIN_WIDTH  = 430;
@@ -225,5 +227,55 @@ ipcMain.handle('analyze-media-ytdlp', async (event, targetUrl) => {
       resolve({ success: false, error: err.message });
     }
   });
+});
+
+// ─── Custom Storage & Download Handlers ──────────────────────────────────────
+ipcMain.handle('get-default-download-dir', async () => {
+  return path.join(app.getPath('downloads'), 'KYO');
+});
+
+ipcMain.handle('select-download-dir', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory', 'createDirectory'],
+    title: 'Pilih Folder Penyimpanan KYO Downloader'
+  });
+  if (result.canceled || !result.filePaths.length) return null;
+  currentDownloadDir = result.filePaths[0];
+  return result.filePaths[0];
+});
+
+ipcMain.handle('set-download-path', async (event, customPath) => {
+  if (customPath && typeof customPath === 'string') {
+    currentDownloadDir = customPath;
+  }
+  return currentDownloadDir;
+});
+
+ipcMain.handle('open-download-dir', async (event, customPath) => {
+  const dir = customPath || currentDownloadDir || path.join(app.getPath('downloads'), 'KYO');
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  shell.openPath(dir);
+  return true;
+});
+
+ipcMain.handle('save-download-buffer', async (event, { folderPath, filename, buffer, category }) => {
+  try {
+    let baseDir = folderPath || currentDownloadDir || path.join(app.getPath('downloads'), 'KYO');
+    if (category) {
+      const sub = category === 'audio' ? 'AudioYo' : (category === 'image' ? 'ImageYo' : 'VideoYo');
+      baseDir = path.join(baseDir, sub);
+    }
+    if (!fs.existsSync(baseDir)) {
+      fs.mkdirSync(baseDir, { recursive: true });
+    }
+    const targetFile = path.join(baseDir, filename);
+    await fs.promises.writeFile(targetFile, Buffer.from(buffer));
+    return { success: true, filePath: targetFile, folder: baseDir };
+  } catch (err) {
+    console.error('Failed to save download buffer:', err);
+    return { success: false, error: err.message };
+  }
 });
 
