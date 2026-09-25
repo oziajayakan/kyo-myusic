@@ -63,27 +63,40 @@ function createWindow() {
   });
 }
 
-// ─── App lifecycle ────────────────────────────────────────────────────────────
-app.whenReady().then(() => {
-  // Do not corrupt googlevideo or youtube requests to avoid 403 signature mismatches
-  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-    if (!details.url.includes('googlevideo.com') && !details.url.includes('youtube.com')) {
-      details.requestHeaders['User-Agent'] =
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+// ─── Single Instance Lock ───────────────────────────────────────────────────
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
     }
-    callback({ requestHeaders: details.requestHeaders });
   });
 
-  createWindow();
+  // ─── App lifecycle ────────────────────────────────────────────────────────────
+  app.whenReady().then(() => {
+    // Do not corrupt googlevideo or youtube requests to avoid 403 signature mismatches
+    session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+      if (!details.url.includes('googlevideo.com') && !details.url.includes('youtube.com')) {
+        details.requestHeaders['User-Agent'] =
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+      }
+      callback({ requestHeaders: details.requestHeaders });
+    });
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    createWindow();
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
   });
-});
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+  });
+}
 
 // ─── Native yt-dlp IPC Handler ───────────────────────────────────────────────
 ipcMain.handle('open-external', async (event, url) => {
@@ -234,14 +247,22 @@ ipcMain.handle('get-default-download-dir', async () => {
   return path.join(app.getPath('downloads'), 'KYO');
 });
 
-ipcMain.handle('select-download-dir', async () => {
-  const result = await dialog.showOpenDialog(mainWindow, {
-    properties: ['openDirectory', 'createDirectory'],
-    title: 'Pilih Folder Penyimpanan KYO Downloader'
-  });
-  if (result.canceled || !result.filePaths.length) return null;
-  currentDownloadDir = result.filePaths[0];
-  return result.filePaths[0];
+ipcMain.handle('select-download-dir', async (event) => {
+  try {
+    const parentWin = (mainWindow && !mainWindow.isDestroyed()) ? mainWindow : null;
+    const result = await dialog.showOpenDialog(parentWin, {
+      properties: ['openDirectory', 'createDirectory'],
+      title: 'Pilih Folder Penyimpanan KYO Downloader'
+    });
+    if (!result || result.canceled || !result.filePaths || !result.filePaths.length) {
+      return null;
+    }
+    currentDownloadDir = result.filePaths[0];
+    return result.filePaths[0];
+  } catch (err) {
+    console.error('select-download-dir error:', err);
+    return null;
+  }
 });
 
 ipcMain.handle('set-download-path', async (event, customPath) => {
@@ -252,12 +273,17 @@ ipcMain.handle('set-download-path', async (event, customPath) => {
 });
 
 ipcMain.handle('open-download-dir', async (event, customPath) => {
-  const dir = customPath || currentDownloadDir || path.join(app.getPath('downloads'), 'KYO');
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  try {
+    const dir = customPath || currentDownloadDir || path.join(app.getPath('downloads'), 'KYO');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    await shell.openPath(dir);
+    return true;
+  } catch (err) {
+    console.error('open-download-dir error:', err);
+    return false;
   }
-  shell.openPath(dir);
-  return true;
 });
 
 ipcMain.handle('save-download-buffer', async (event, { folderPath, filename, buffer, category }) => {
